@@ -1,0 +1,57 @@
+// O'z bazamiz — FAQAT foydalanuvchilar va audit.
+//
+// ⚠️ To'lov ma'lumoti bu yerda YO'Q va bo'lmasligi kerak: u `project` bazasida
+// (boshqa tizimniki) va xom SQL bilan, faqat o'qish rejimida olinadi
+// (`src/lib/projectDb.ts`). Uning jadvallari shu sxemaga qo'shilmaydi —
+// migratsiyasini biz boshqarmaymiz.
+
+generator client {
+  provider = "prisma-client-js"
+  // `native` — Windows (dev), ikkinchisi — Docker konteyner (debian bookworm).
+  // Olib tashlansa konteynerda "Query engine not found".
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Ilova faqat adminlar uchun (foydalanuvchi qarori, 2026-09-11).
+/// SUPER_ADMIN — qo'shimcha ravishda foydalanuvchilar va auditni boshqaradi.
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+}
+
+model User {
+  id           String  @id @default(cuid())
+  username     String  @unique
+  fullName     String
+  passwordHash String
+  role         Role    @default(ADMIN)
+  isActive     Boolean @default(true)
+
+  /// Parol almashtirilganda +1. JWT serverdan bekor qilib bo'lmaydi, shuning uchun
+  /// token ichidagi versiya har so'rovda shu bilan solishtiriladi (`getCurrentUser`).
+  sessionVersion Int @default(0)
+
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  auditLogs AuditLog[]
+}
+
+/// Kim nima qildi: kirish, eksport (hisob raqamlari bor), foydalanuvchi o'zgarishlari.
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+}

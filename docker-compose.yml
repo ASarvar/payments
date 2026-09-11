@@ -1,0 +1,74 @@
+# To'lovlar monitoringi — production (Linux server).
+#
+# Ishga tushirish:   docker compose up -d --build
+# Yangilash:         git pull && docker compose up -d --build
+# Loglar:            docker compose logs -f web
+# Birinchi admin:    docker compose --profile setup run --rm seed
+#
+# ⚠️ Baza konteyneri YO'Q: ikkala baza ham HOST'dagi Postgres'da —
+#    `payments` (o'z bazamiz) va `project` (to'lovlar, faqat o'qish). DEPLOY.md §2.
+# ⚠️ Barcha sozlamalar `.env.production` da (namuna: .env.production.example).
+
+name: tolov-monitoring
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Konteyner ichida `localhost` — konteynerning O'ZI. Host Postgres'iga shu nom orqali.
+x-host: &host-gateway
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+services:
+  # ──────────────────── Migratsiya (bir martalik) ────────────────────
+  migrate:
+    build:
+      context: .
+      target: tools
+    image: tolov-monitoring-tools:latest
+    env_file: .env.production
+    <<: *host-gateway
+    command: ["npx", "prisma", "migrate", "deploy"]
+    restart: "no"
+    logging: *default-logging
+
+  # ───────────────────────── Next.js ilova ─────────────────────────
+  # Faqat 127.0.0.1 ga — tashqariga nginx chiqaradi (`/payments`).
+  # ⚠️ 3001: 3000 ni obyektlar monitoringi band qilgan.
+  web:
+    build:
+      context: .
+      target: web
+    image: tolov-monitoring-web:latest
+    restart: unless-stopped
+    env_file: .env.production
+    <<: *host-gateway
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    logging: *default-logging
+
+  # ─────────────── Birinchi super admin (qo'lda, bir marta) ───────────────
+  seed:
+    build:
+      context: .
+      target: tools
+    image: tolov-monitoring-tools:latest
+    env_file: .env.production
+    <<: *host-gateway
+    command: ["npx", "tsx", "prisma/seed.ts"]
+    profiles: ["setup"]
+    restart: "no"
+
+# ⚠️ Tarmoq manzili QAT'IY — host Postgres'ining `pg_hba.conf` ida aynan shu
+#    diapazonga ruxsat beriladi (DEPLOY.md §2). O'zgartirsangiz — u yerda ham.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.77.0/24

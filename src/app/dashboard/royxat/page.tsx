@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FileDown } from "lucide-react";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { isModerator, requireUserOrRedirect, scopeFilters } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { CHANNELS, HOLATLAR, channelByKey, holatLabel, isHolat, type Holat } from "@/lib/channels";
 import { parseFilters, filterParams, href, one, type SP } from "@/lib/filters";
@@ -19,11 +19,11 @@ const HOLAT_TONE: Record<string, string> = {
 };
 
 export default async function ListPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  const user = await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
       <>
-        <PageHeader title="To'lovlar ro'yxati" />
+        <PageHeader title="To'lovlar ro'yxati" refresh={!isModerator(user)} />
         <NotConfigured />
       </>
     );
@@ -34,7 +34,16 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   const holatRaw = one(sp.holat);
   // Standart — asosiy savol: "nima tasdiqlangan-u, hali o'tkazilmagan".
   const holat: Holat = isHolat(holatRaw) ? holatRaw : "otkazilmagan";
-  const { f } = parseFilters(sp, ch);
+  // ⚠️ Moderator — faqat o'z hududi (URL'dagi `hudud` e'tiborsiz). Eksport ham xuddi shunday.
+  const f = scopeFilters(user, parseFilters(sp, ch).f);
+  if (!f) {
+    return (
+      <>
+        <PageHeader title="To'lovlar ro'yxati" refresh={!isModerator(user)} />
+        <ErrorBox message="Sizga hudud biriktirilmagan — super adminga murojaat qiling." />
+      </>
+    );
+  }
   const q = one(sp.q)?.trim() || undefined;
   const page = Math.max(1, Number(one(sp.p)) || 1);
 
@@ -45,6 +54,12 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   const regions = regionsR.status === "fulfilled" ? regionsR.value : [];
   const districts = districtsR.status === "fulfilled" ? districtsR.value : [];
   if (f.area !== undefined && !districts.some((d) => d.id === f.area)) f.area = undefined;
+
+  // Moderatorga hudud tanlovi o'rniga — qat'iy qiymat.
+  const lockedRegion =
+    isModerator(user) && f.obl !== undefined
+      ? { value: String(f.obl), label: regions.find((r) => r.id === f.obl)?.name ?? `#${f.obl}` }
+      : undefined;
 
   let data: Awaited<ReturnType<typeof listPayments>> | null = null;
   let error: string | null = null;
@@ -63,7 +78,10 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
 
   return (
     <div>
-      <PageHeader title="To'lovlar ro'yxati" subtitle={`${ch.label} · ${holatLabel(holat)}`} />
+      <PageHeader
+        title="To'lovlar ro'yxati" refresh={!isModerator(user)}
+        subtitle={`${ch.label} · ${holatLabel(holat)}${lockedRegion ? ` · ${lockedRegion.label}` : ""}`}
+      />
 
       <FilterBar
         values={{
@@ -78,7 +96,8 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
         resetHref="/dashboard/royxat"
         channels={CHANNELS.map((c) => ({ value: c.key, label: c.label }))}
         holatlar={HOLATLAR.map((h) => ({ value: h.key, label: h.label }))}
-        regions={regions.map((r) => ({ value: String(r.id), label: r.name }))}
+        regions={lockedRegion ? undefined : regions.map((r) => ({ value: String(r.id), label: r.name }))}
+        lockedRegion={lockedRegion}
         districts={districts.map((d) => ({ value: String(d.id), label: d.name }))}
         showQ
       />

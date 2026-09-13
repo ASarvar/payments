@@ -1,18 +1,33 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createUserAction, resetPasswordAction, updateUserAction, type ActionState } from "./actions";
+
+export type RoleKey = "SUPER_ADMIN" | "ADMIN" | "MODERATOR";
+
+export interface RegionOpt {
+  id: number;
+  name: string;
+}
 
 export interface UserView {
   id: string;
   username: string;
   fullName: string;
-  role: "SUPER_ADMIN" | "ADMIN";
+  role: RoleKey;
+  /** Faqat moderator uchun. */
+  regionId: number | null;
   isActive: boolean;
   /** Serverda formatlangan satr (gidratsiya uchun). */
   lastLogin: string;
   isSelf: boolean;
 }
+
+const ROLE_OPTIONS: { value: RoleKey; label: string }[] = [
+  { value: "ADMIN", label: "Administrator" },
+  { value: "MODERATOR", label: "Hudud moderatori" },
+  { value: "SUPER_ADMIN", label: "Super admin" },
+];
 
 const inputCls =
   "rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/20";
@@ -27,18 +42,62 @@ function Msg({ s }: { s: ActionState }) {
   ) : null;
 }
 
-export function CreateUserForm() {
+/** Rol va — faqat "Hudud moderatori" tanlanganda — hudud. Hududni server ham tekshiradi. */
+function RoleFields({
+  role,
+  regionId,
+  regions,
+  compact,
+}: {
+  role: RoleKey;
+  regionId: number | null;
+  regions: RegionOpt[];
+  compact?: boolean;
+}) {
+  const [r, setR] = useState<RoleKey>(role);
+  const cls = compact ? `${inputCls} py-1.5` : inputCls;
+  return (
+    <>
+      <select name="role" value={r} onChange={(e) => setR(e.target.value as RoleKey)} className={cls}>
+        {ROLE_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {r === "MODERATOR" ? (
+        <select name="regionId" required defaultValue={regionId ?? ""} className={`${cls} max-w-[200px]`}>
+          <option value="" disabled>
+            Hududni tanlang
+          </option>
+          {regions.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
+        </select>
+      ) : null}
+    </>
+  );
+}
+
+export function CreateUserForm({ regions }: { regions: RegionOpt[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(createUserAction, null);
   return (
     <form action={action} className="space-y-2 p-4">
-      <div className="grid gap-2 md:grid-cols-[1fr_1.5fr_1fr_auto_auto]">
-        <input name="username" required placeholder="Login" autoComplete="off" className={inputCls} />
-        <input name="fullName" required placeholder="F.I.Sh." className={inputCls} />
-        <input name="password" type="password" required minLength={10} placeholder="Parol (≥10)" autoComplete="new-password" className={inputCls} />
-        <select name="role" defaultValue="ADMIN" className={inputCls}>
-          <option value="ADMIN">Administrator</option>
-          <option value="SUPER_ADMIN">Super admin</option>
-        </select>
+      <div className="flex flex-wrap items-center gap-2">
+        <input name="username" required placeholder="Login" autoComplete="off" className={`${inputCls} w-40`} />
+        <input name="fullName" required placeholder="F.I.Sh." className={`${inputCls} min-w-[220px] flex-1`} />
+        <input
+          name="password"
+          type="password"
+          required
+          minLength={10}
+          placeholder="Parol (≥10)"
+          autoComplete="new-password"
+          className={`${inputCls} w-40`}
+        />
+        <RoleFields role="ADMIN" regionId={null} regions={regions} />
         <button type="submit" disabled={pending} className={btnCls} style={{ background: "var(--cobalt)" }}>
           Qo&apos;shish
         </button>
@@ -48,7 +107,7 @@ export function CreateUserForm() {
   );
 }
 
-export function UserRow({ u }: { u: UserView }) {
+export function UserRow({ u, regions }: { u: UserView; regions: RegionOpt[] }) {
   const [upd, updAction, updPending] = useActionState<ActionState, FormData>(updateUserAction, null);
   const [pw, pwAction, pwPending] = useActionState<ActionState, FormData>(resetPasswordAction, null);
   return (
@@ -60,10 +119,7 @@ export function UserRow({ u }: { u: UserView }) {
       <td className="px-3 py-2.5">
         <form action={updAction} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="userId" value={u.id} />
-          <select name="role" defaultValue={u.role} className={`${inputCls} py-1.5`}>
-            <option value="ADMIN">Administrator</option>
-            <option value="SUPER_ADMIN">Super admin</option>
-          </select>
+          <RoleFields role={u.role} regionId={u.regionId} regions={regions} compact />
           <label className="flex items-center gap-1.5 text-[13px] text-slate-600">
             <input type="checkbox" name="isActive" defaultChecked={u.isActive} /> Faol
           </label>

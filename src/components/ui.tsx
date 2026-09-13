@@ -11,7 +11,18 @@ export const tdR = `${td} whitespace-nowrap text-right tabular-nums`;
 export const totalRow = "border-b border-border font-semibold";
 export const totalStyle = { background: "var(--gold-lighter)" } as const;
 
-export function PageHeader({ title, subtitle, children }: { title: string; subtitle?: ReactNode; children?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  children,
+  refresh = true,
+}: {
+  title: string;
+  subtitle?: ReactNode;
+  children?: ReactNode;
+  /** "Yangilash" tugmasi. ⚠️ Moderatorga `false` — `refreshDataAction` unga ruxsat bermaydi. */
+  refresh?: boolean;
+}) {
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
@@ -22,6 +33,14 @@ export function PageHeader({ title, subtitle, children }: { title: string; subti
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {children}
+        {refresh ? <RefreshButton /> : null}
+      </div>
+    </div>
+  );
+}
+
+function RefreshButton() {
+  return (
         <form action={refreshDataAction}>
           <button
             type="submit"
@@ -32,8 +51,6 @@ export function PageHeader({ title, subtitle, children }: { title: string; subti
             Yangilash
           </button>
         </form>
-      </div>
-    </div>
   );
 }
 

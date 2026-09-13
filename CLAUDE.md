@@ -1,7 +1,7 @@
 # To'lovlar monitoringi (`payments`)
 
 Ijara to'lovlarining **taqsimoti va o'tkazilishi** monitoringi. Ichki ilova, faqat
-administratorlar uchun. Interfeys **o'zbek tilida**. Obyektlar monitoringidan
+administratorlar va hudud moderatorlari uchun. Interfeys **o'zbek tilida**. Obyektlar monitoringidan
 (`davlat-mulki-dashboard`) ALOHIDA loyiha (foydalanuvchi qarori, 2026-09-11) — lekin
 stack, uslub va deploy tartibi o'sha loyihadan olingan.
 
@@ -106,7 +106,11 @@ app/api/export/route.ts     Excel (oqim), ro'yxat bilan bir xil Selection
 ## Kirish
 
 Login + parol (email yo'q), ochiq ro'yxat yo'q. Rollar: `SUPER_ADMIN` (foydalanuvchilar,
-audit), `ADMIN`. Sessiya JWT, **1 soat faolsizlik** (sirpanuvchi). Parol tiklansa
+audit), `ADMIN`, `MODERATOR` — hudud moderatori (foydalanuvchi qarori, 2026-09-14): FAQAT
+"To'lovlar ro'yxati" va FAQAT o'z hududi (`User.regionId`, bitta), Excel ham shu hudud bilan.
+⚠️ Himoya `lib/authz.ts` da: sahifalarda `requireAdminPage()`, ro'yxat VA eksportda
+`scopeFilters()`. Yangi sahifa/route qo'shsangiz — moderatorni o'ylang (menyuda yashirish
+himoya emas). Rol va hudud har so'rovda bazadan o'qiladi. Sessiya JWT, **1 soat faolsizlik** (sirpanuvchi). Parol tiklansa
 `sessionVersion` +1 → barcha sessiyalar bekor. Login'ga 15 daqiqada 10 ta xato urinish.
 ⚠️ Cookie nomlari HAR DOIM `payments.*` — dev'da ham: localhost'da obyektlar ilovasi bor,
 cookie portga bog'lanmaydi.

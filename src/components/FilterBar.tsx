@@ -1,4 +1,5 @@
 import { Search, RotateCcw } from "lucide-react";
+import { withBase } from "@/lib/basePath";
 
 interface Opt {
   value: string;
@@ -18,6 +19,8 @@ const labelCls = "text-[11px] font-medium uppercase tracking-wide text-muted-for
  * (`lib/filters.ts`), aks holda QQS standart sanasi har safar qaytib kelardi.
  * ⚠️ Hudud o'zgarganda eski tuman qolib ketishi mumkin — sahifa uni o'sha hudud
  * tumanlari ro'yxatiga qarab tekshiradi va mos kelmasa tashlaydi.
+ * `lockedRegion` — hudud moderatori uchun: tanlov o'rniga qat'iy qiymat (yashirin `hudud`
+ * yuboriladi, aks holda tuman filtri ishlamasdi). Cheklovni server baribar majburlaydi.
  */
 export function FilterBar({
   values,
@@ -28,6 +31,7 @@ export function FilterBar({
   holatlar,
   showQ,
   hidden,
+  lockedRegion,
   children,
 }: {
   values: { dan?: string; gacha?: string; hudud?: string; tuman?: string; kanal?: string; holat?: string; q?: string };
@@ -38,6 +42,7 @@ export function FilterBar({
   holatlar?: Opt[];
   showQ?: boolean;
   hidden?: Record<string, string>;
+  lockedRegion?: Opt;
   children?: React.ReactNode;
 }) {
   return (
@@ -79,7 +84,13 @@ export function FilterBar({
         </div>
       </label>
 
-      {regions ? (
+      {lockedRegion ? (
+        <div className="flex flex-col gap-1">
+          <span className={labelCls}>Hudud</span>
+          <input type="hidden" name="hudud" value={lockedRegion.value} />
+          <span className={`${inputCls} max-w-[220px] cursor-default truncate bg-slate-50 text-slate-600`}>{lockedRegion.label}</span>
+        </div>
+      ) : regions ? (
         <label className="flex flex-col gap-1">
           <span className={labelCls}>Hudud</span>
           <select name="hudud" defaultValue={values.hudud ?? ""} className={`${inputCls} max-w-[200px]`}>
@@ -128,8 +139,10 @@ export function FilterBar({
         <Search className="h-4 w-4" />
         Qo&apos;llash
       </button>
+      {/* ⚠️ Oddiy <a> — Link EMAS: to'liq yuklash inputlarni tozalaydi (defaultValue client
+          navigatsiyada yangilanmaydi). Shuning uchun basePath QO'LDA (`withBase`). */}
       <a
-        href={resetHref}
+        href={withBase(resetHref)}
         className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-slate-600 transition hover:bg-muted"
       >
         <RotateCcw className="h-4 w-4" />

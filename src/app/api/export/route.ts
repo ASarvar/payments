@@ -1,6 +1,6 @@
 import { PassThrough, Readable } from "node:stream";
 import ExcelJS from "exceljs";
-import { getCurrentUser } from "@/lib/authz";
+import { getCurrentUser, scopeFilters } from "@/lib/authz";
 import { audit } from "@/lib/audit";
 import { env } from "@/lib/env";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
@@ -31,7 +31,9 @@ export async function GET(req: Request) {
   const sp = Object.fromEntries(new URL(req.url).searchParams) as SP;
   const ch = channelByKey(sp.kanal as string | undefined) ?? CHANNELS[0];
   const holat: Holat = isHolat(sp.holat as string | undefined) ? (sp.holat as Holat) : "otkazilmagan";
-  const { f } = parseFilters(sp, ch);
+  // ⚠️ Moderator — faqat o'z hududi (ro'yxat sahifasi bilan AYNAN bir xil qoida).
+  const f = scopeFilters(user, parseFilters(sp, ch).f);
+  if (!f) return text("Sizga hudud biriktirilmagan", 403);
   const q = (sp.q as string | undefined)?.trim() || undefined;
   const sel: Selection = { channel: ch.key, holat, f, q };
 

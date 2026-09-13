@@ -17,11 +17,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Ilova faqat adminlar uchun (foydalanuvchi qarori, 2026-09-11).
-/// SUPER_ADMIN — qo'shimcha ravishda foydalanuvchilar va auditni boshqaradi.
+/// SUPER_ADMIN — hammasi + foydalanuvchilar va audit. ADMIN — barcha hisobotlar.
+/// MODERATOR — hudud moderatori (foydalanuvchi qarori, 2026-09-14): FAQAT "To'lovlar
+/// ro'yxati" va FAQAT o'z hududi (`regionId`), Excel ham shu hudud bilan (`lib/authz.ts`).
 enum Role {
   SUPER_ADMIN
   ADMIN
+  MODERATOR
 }
 
 model User {
@@ -31,6 +33,10 @@ model User {
   passwordHash String
   role         Role    @default(ADMIN)
   isActive     Boolean @default(true)
+
+  /// Faqat MODERATOR uchun: `project.lists` (`type_id = 1`) id — `0` Respublika, `26` Toshkent sh.
+  /// ⚠️ FK yo'q — hududlar boshqa bazada (`project`); qiymat saqlashda ro'yxatdan tekshiriladi.
+  regionId Int?
 
   /// Parol almashtirilganda +1. JWT serverdan bekor qilib bo'lmaydi, shuning uchun
   /// token ichidagi versiya har so'rovda shu bilan solishtiriladi (`getCurrentUser`).

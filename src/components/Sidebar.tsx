@@ -20,11 +20,13 @@ interface NavItem {
   icon: LucideIcon;
   exact?: boolean;
   superOnly?: boolean;
+  /** Hudud moderatoriga ko'rinmaydi (u faqat ro'yxatni ko'radi). */
+  adminOnly?: boolean;
 }
 
 const NAV: NavItem[] = [
-  { href: "/dashboard", match: "/dashboard", label: "Umumiy ko'rinish", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/kanal/vat", match: "/dashboard/kanal", label: "Kanallar", icon: Layers },
+  { href: "/dashboard", match: "/dashboard", label: "Umumiy ko'rinish", icon: LayoutDashboard, exact: true, adminOnly: true },
+  { href: "/dashboard/kanal/vat", match: "/dashboard/kanal", label: "Kanallar", icon: Layers, adminOnly: true },
   { href: "/dashboard/royxat", match: "/dashboard/royxat", label: "To'lovlar ro'yxati", icon: List },
   { href: "/dashboard/users", match: "/dashboard/users", label: "Foydalanuvchilar", icon: Users, superOnly: true },
   { href: "/dashboard/audit", match: "/dashboard/audit", label: "Audit", icon: ScrollText, superOnly: true },
@@ -41,16 +43,18 @@ function initials(name: string): string {
 export function Sidebar({
   user,
   isSuperAdmin,
+  isModerator,
 }: {
   user: { name: string; username: string; roleLabel: string };
-  /** ⚠️ Faqat menyu ko'rinishi uchun — haqiqiy himoya sahifaning o'zida. */
+  /** ⚠️ Ikkalasi faqat menyu ko'rinishi uchun — haqiqiy himoya sahifaning o'zida (`lib/authz.ts`). */
   isSuperAdmin: boolean;
+  isModerator: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
 
-  const items = NAV.filter((n) => !n.superOnly || isSuperAdmin);
+  const items = NAV.filter((n) => (!n.superOnly || isSuperAdmin) && (!n.adminOnly || !isModerator));
 
   const inner = (
     <>

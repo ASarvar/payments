@@ -3,6 +3,14 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.2.0 — 2026-09-14
+
+- **Hudud moderatorlari.** Yangi rol: super admin foydalanuvchini bitta hududga biriktiradi;
+  moderator faqat "To'lovlar ro'yxati"ni va faqat o'z hududini ko'radi (Excel ham shu hudud
+  bilan, har yuklash auditda). Boshqa bo'limlar unga yopiq. Bazada migratsiya bor
+  (`Role` ga `MODERATOR`, `User.regionId`).
+- **Tuzatildi:** filtrdagi "Tozalash" production'da `/payments` siz manzilga o'tib 404 berardi.
+
 ## 0.1.1 — 2026-09-11
 
 - **Deploy tuzatildi.** `package-lock.json` Linux'da qayta yaratildi — Windows'dagi lock

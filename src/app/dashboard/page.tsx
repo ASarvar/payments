@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Banknote, Hourglass, CircleDashed, ShieldAlert } from "lucide-react";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requireAdminPage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, filterParams, href, type SP } from "@/lib/filters";
 import { env } from "@/lib/env";
@@ -18,7 +18,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, totalStyle } from "@/components/ui";
 
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requireAdminPage();
   if (!projectConfigured()) {
     return (
       <>

@@ -3,6 +3,12 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.2.1 — 2026-09-14
+
+- **Standart sana — 13.05.2025.** Sana berilmaganda barcha kanal va sahifalarda (umumiy
+  ko'rinish, kanallar, ro'yxat, Excel) 13.05.2025 dan — shu kunning o'zi bilan — boshlanadi.
+  Avval faqat QQS uchun 14.05.2025 edi. Sanani o'zgartirish yoki tozalash mumkin.
+
 ## 0.2.0 — 2026-09-14
 
 - **Hudud moderatorlari.** Yangi rol: super admin foydalanuvchini bitta hududga biriktiradi;

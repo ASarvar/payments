@@ -35,7 +35,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   // Standart — asosiy savol: "nima tasdiqlangan-u, hali o'tkazilmagan".
   const holat: Holat = isHolat(holatRaw) ? holatRaw : "otkazilmagan";
   // ⚠️ Moderator — faqat o'z hududi (URL'dagi `hudud` e'tiborsiz). Eksport ham xuddi shunday.
-  const f = scopeFilters(user, parseFilters(sp, ch).f);
+  const f = scopeFilters(user, parseFilters(sp).f);
   if (!f) {
     return (
       <>

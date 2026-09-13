@@ -89,7 +89,7 @@ export default async function ChannelPage({
   }
 
   const sp = await searchParams;
-  const parsed = parseFilters(sp, ch);
+  const parsed = parseFilters(sp);
   // Sahifaning o'zi hududlar KESIMI — hudud/tuman filtri bu yerda qo'llanmaydi.
   const f: PaymentFilters = { from: parsed.f.from, to: parsed.f.to };
   const ochiqRaw = one(sp.ochiq);
@@ -108,8 +108,8 @@ export default async function ChannelPage({
   const districts = distR.status === "fulfilled" ? distR.value : null;
   const total = regions ? totalsOf(regions) : null;
 
-  // ⚠️ Standart sana (QQS) boshqa kanalga olib o'tilmaydi — `dan` faqat foydalanuvchi
-  // o'zi bergan bo'lsa havolaga qo'shiladi.
+  // Kanal tugmalari: `dan` faqat foydalanuvchi o'zi bergan bo'lsa havolaga qo'shiladi —
+  // aks holda standart sana (`DEFAULT_FROM`) baribar qo'llanadi va URL toza qoladi.
   const selfParams = { dan: parsed.danExplicit ? (f.from ?? "") : undefined, gacha: f.to };
   const listHref = (obl?: number, area?: number) => (holat: string) =>
     href("/dashboard/royxat", { kanal: ch.key, holat, ...filterParams({ ...f, obl, area }) });
@@ -129,7 +129,7 @@ export default async function ChannelPage({
             ) : (
               <> · barcha davr</>
             )}
-            {!parsed.danExplicit && ch.defaultFrom ? <> (standart boshlanish sanasi — o&apos;zgartirish mumkin)</> : null}
+            {!parsed.danExplicit ? <> (standart boshlanish sanasi — o&apos;zgartirish mumkin)</> : null}
           </>
         }
       />

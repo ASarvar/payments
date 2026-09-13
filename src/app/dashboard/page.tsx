@@ -29,7 +29,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   }
 
   const sp = await searchParams;
-  // ⚠️ Umumiy ko'rinishda kanal standart sanasi QO'LLANMAYDI (u 12 kanalni birga ko'rsatadi).
+  // Standart sana (`DEFAULT_FROM`) hamma sahifada bir xil — jadvaldagi son = ro'yxatdagi son.
   const { f } = parseFilters(sp);
 
   const [regionsR, districtsR] = await Promise.allSettled([

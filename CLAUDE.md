@@ -78,9 +78,10 @@ ataylab bor.
 ### Sana va vaqt
 
 - Filtr — `doc_date` (to'lov sanasi), ikkala chegara QO'SHIB.
-- ⚠️ QQS standart boshlanishi `2025-05-14` — foydalanuvchi SQL'idagi `doc_date > '2025-05-13'`
-  bilan aynan bir xil. Standart FILTR, qoida emas. `dan` uch holatli (`lib/filters.ts`):
-  yo'q → standart, bo'sh → filtr yo'q, sana → o'sha. Standart boshqa kanalga olib o'tilmaydi.
+- ⚠️ Standart boshlanish `2025-05-13` (QO'SHIB) — BARCHA kanal va sahifalarda (foydalanuvchi
+  qarori, 2026-09-14). Foydalanuvchi QQS SQL'idagi `doc_date > '2025-05-13'` dan 13-may kuni
+  bilan farq qiladi — ataylab. Standart FILTR, qoida emas. `dan` uch holatli (`lib/filters.ts`):
+  yo'q → standart, bo'sh → filtr yo'q, sana → o'sha.
 - ⚠️ `created_at`/`updated_at` — `timestamp WITHOUT time zone` (mahalliy vaqt). Prisma ularni UTC
   deb o'qiydi — xizmat ISO satr qiladi, UI `dmy()` bilan faqat tartibni almashtiradi.
   `timeZone: "Asia/Tashkent"` bilan formatlash +5 soat qo'shib yuborardi.

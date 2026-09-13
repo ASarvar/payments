@@ -21,25 +21,11 @@ export interface Channel {
   sum: string;
   accept: string;
   sent: string;
-  /**
-   * Kanal sahifasi to'g'ridan-to'g'ri ochilganda (sana berilmaganda) qo'llanadigan
-   * boshlang'ich sana (YYYY-MM-DD, qo'shib hisoblanadi).
-   */
-  defaultFrom?: string;
 }
 
+// Standart sana filtri kanalga bog'liq EMAS — hammasiga bir xil (`lib/filters.ts` → `DEFAULT_FROM`).
 export const CHANNELS: readonly Channel[] = [
-  {
-    key: "vat",
-    label: "QQS",
-    sum: "vat_sum",
-    accept: "vat_accept",
-    sent: "sent_vat",
-    // ⚠️ Foydalanuvchining hisobot SQL'ida `doc_date > '2025-05-13'` (qat'iy katta).
-    // Bizning filtr "dan" — QO'SHIB hisoblaydi, shuning uchun 14-may. Standart
-    // filtr, qoida emas: foydalanuvchi sanani o'zgartira oladi (qarori, 2026-09-11).
-    defaultFrom: "2025-05-14",
-  },
+  { key: "vat", label: "QQS", sum: "vat_sum", accept: "vat_accept", sent: "sent_vat" },
   { key: "mahalliy", label: "Mahalliy budjet", sum: "mahalliy_sum", accept: "mahalliy_accept", sent: "sent_mahalliy" },
   { key: "owner", label: "Balansda saqlovchi", sum: "owner_sum", accept: "owner_accept", sent: "sent_owner" },
   { key: "center", label: "Markaz", sum: "center_sum", accept: "center_accept", sent: "sent_center" },

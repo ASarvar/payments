@@ -1,4 +1,3 @@
-import type { Channel } from "@/lib/channels";
 import type { PaymentFilters } from "@/server/services/payments";
 
 export type SP = Record<string, string | string[] | undefined>;
@@ -6,6 +5,15 @@ export type SP = Record<string, string | string[] | undefined>;
 export const one = (v: string | string[] | undefined): string | undefined => (Array.isArray(v) ? v[0] : v);
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Standart boshlanish sanasi — `dan` berilmaganda, BARCHA kanal va sahifalarda
+ * (foydalanuvchi qarori, 2026-09-14: "13.05.2025 dan, kunning o'zi bilan").
+ * ⚠️ QO'SHIB hisoblanadi (`doc_date >= 2025-05-13`) — foydalanuvchining QQS SQL'idagi
+ * `doc_date > '2025-05-13'` dan 13-may kuni bilan farq qiladi, bu ATAYLAB.
+ * Standart FILTR, qoida emas: foydalanuvchi sanani o'zgartira yoki tozalay oladi.
+ */
+export const DEFAULT_FROM = "2025-05-13";
 
 function int(v: string | undefined): number | undefined {
   if (!v || !/^-?\d{1,9}$/.test(v)) return undefined;
@@ -16,17 +24,16 @@ function int(v: string | undefined): number | undefined {
  * URL → filtr. Parametrlar: `dan`, `gacha` (YYYY-MM-DD), `hudud`, `tuman`.
  *
  * ⚠️ `dan` ning uch holati bor:
- *   - YO'Q (parametr umuman berilmagan) → kanalning standart sanasi (`defaultFrom`,
- *     hozircha faqat QQS);
+ *   - YO'Q (parametr umuman berilmagan) → `DEFAULT_FROM`;
  *   - BO'SH (`dan=`) → foydalanuvchi sanani ataylab tozalagan, filtr yo'q;
  *   - sana → o'sha sana.
  * Busiz sanani o'chirib bo'lmasdi — standart har safar qaytib kelardi.
- * `danExplicit` havolalar qurishda kerak: standart qiymat BOSHQA kanalga olib o'tilmasin.
+ * `danExplicit` — sahifa "standart sana qo'llandi" deb ko'rsatishi uchun.
  */
-export function parseFilters(sp: SP, channel?: Channel): { f: PaymentFilters; danExplicit: boolean } {
+export function parseFilters(sp: SP): { f: PaymentFilters; danExplicit: boolean } {
   const danRaw = one(sp.dan);
   const danExplicit = danRaw !== undefined;
-  const from = danExplicit ? (DATE_RE.test(danRaw) ? danRaw : undefined) : channel?.defaultFrom;
+  const from = danExplicit ? (DATE_RE.test(danRaw) ? danRaw : undefined) : DEFAULT_FROM;
   const gacha = one(sp.gacha);
   const obl = int(one(sp.hudud));
   return {

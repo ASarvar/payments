@@ -3,16 +3,19 @@
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/authz";
 import { audit } from "@/lib/audit";
+import { ROLE_ORDER } from "@/lib/roles";
 import { getRegions } from "@/server/services/payments";
 
-export type ActionState = { ok?: string; error?: string } | null;
+/** Yangi foydalanuvchi formasiga xato bilan qaytariladigan qiymatlar (PAROLSIZ). */
+export type CreateValues = { username: string; fullName: string; role: Role; regionId: number | null };
+export type ActionState = { ok?: string; error?: string; values?: CreateValues } | null;
 
 const PASSWORD = z.string().min(10, "Parol kamida 10 belgi bo'lishi kerak").max(200);
-const ROLE = z.enum(["ADMIN", "SUPER_ADMIN", "MODERATOR"]);
-type RoleKey = z.infer<typeof ROLE>;
+const ROLE = z.enum(ROLE_ORDER);
 
 const createSchema = z.object({
   username: z
@@ -29,15 +32,27 @@ function fail(e: unknown): ActionState {
   return { error: e instanceof Error ? e.message : "Kutilmagan xato" };
 }
 
+/** Formadagi hudud id — butun son bo'lmasa `null`. */
+function regionOf(raw: FormDataEntryValue | null): number | null {
+  const s = typeof raw === "string" ? raw.trim() : "";
+  return /^\d{1,9}$/.test(s) ? Number(s) : null;
+}
+
 /**
  * Moderator hududi: faqat MODERATOR uchun va MAJBURIY; boshqa rollarda `null`.
- * ⚠️ FK yo'q (hududlar `project` bazasida) — id o'sha yerdagi haqiqiy ro'yxatdan tekshiriladi.
+ * ⚠️ FK yo'q (hududlar `project` bazasida) — YANGI id o'sha yerdagi haqiqiy ro'yxatdan
+ * tekshiriladi. O'zgarmagan hudud (`current`) tekshirilmaydi: `project` ishlamay qolganda
+ * ham moderatorni bloklash yoki boshqa maydonini saqlash mumkin bo'lsin.
  */
-async function resolveRegion(role: RoleKey, raw: FormDataEntryValue | null): Promise<{ regionId: number | null } | { error: string }> {
+async function resolveRegion(
+  role: Role,
+  raw: FormDataEntryValue | null,
+  current: number | null = null,
+): Promise<{ regionId: number | null } | { error: string }> {
   if (role !== "MODERATOR") return { regionId: null };
-  const s = typeof raw === "string" ? raw.trim() : "";
-  if (!/^\d{1,9}$/.test(s)) return { error: "Moderator uchun hududni tanlang" };
-  const id = Number(s);
+  const id = regionOf(raw);
+  if (id === null) return { error: "Moderator uchun hududni tanlang" };
+  if (id === current) return { regionId: id };
   let regions;
   try {
     regions = await getRegions();
@@ -49,15 +64,23 @@ async function resolveRegion(role: RoleKey, raw: FormDataEntryValue | null): Pro
 }
 
 export async function createUserAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  // ⚠️ React forma amalidan keyin maydonlarni tozalaydi — xato bo'lsa kiritilgani qaytariladi.
+  const values: CreateValues = {
+    username: String(fd.get("username") ?? ""),
+    fullName: String(fd.get("fullName") ?? ""),
+    role: ROLE.safeParse(fd.get("role")).data ?? "ADMIN",
+    regionId: regionOf(fd.get("regionId")),
+  };
+  const err = (error: string): ActionState => ({ error, values });
   try {
     const actor = await requireSuperAdmin();
     const p = createSchema.safeParse(Object.fromEntries(fd));
-    if (!p.success) return { error: p.error.issues[0]?.message ?? "Ma'lumot noto'g'ri" };
+    if (!p.success) return err(p.error.issues[0]?.message ?? "Ma'lumot noto'g'ri");
     const region = await resolveRegion(p.data.role, fd.get("regionId"));
-    if ("error" in region) return { error: region.error };
+    if ("error" in region) return err(region.error);
 
     if (await prisma.user.findUnique({ where: { username: p.data.username } })) {
-      return { error: "Bu login allaqachon band" };
+      return err("Bu login allaqachon band");
     }
     const u = await prisma.user.create({
       data: {
@@ -72,7 +95,7 @@ export async function createUserAction(_: ActionState, fd: FormData): Promise<Ac
     revalidatePath("/dashboard/users");
     return { ok: `"${u.username}" qo'shildi` };
   } catch (e) {
-    return fail(e);
+    return err(e instanceof Error ? e.message : "Kutilmagan xato");
   }
 }
 
@@ -107,13 +130,16 @@ export async function updateUserAction(_: ActionState, fd: FormData): Promise<Ac
     if (userId === actor.id && (role !== "SUPER_ADMIN" || !isActive)) {
       return { error: "O'z rolingizni pasaytira yoki o'zingizni bloklay olmaysiz" };
     }
-    const target = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, username: true } });
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, username: true, regionId: true },
+    });
     if (!target) return { error: "Foydalanuvchi topilmadi" };
     if (target.role === "SUPER_ADMIN" && (role !== "SUPER_ADMIN" || !isActive)) {
       const active = await prisma.user.count({ where: { role: "SUPER_ADMIN", isActive: true } });
       if (active <= 1) return { error: "Tizimda kamida bitta faol super admin qolishi kerak" };
     }
-    const region = await resolveRegion(role, fd.get("regionId"));
+    const region = await resolveRegion(role, fd.get("regionId"), target.regionId);
     if ("error" in region) return { error: region.error };
 
     // Rol va hudud har so'rovda bazadan o'qiladi (`getCurrentUser`) — sessiyani bekor qilish shart emas.

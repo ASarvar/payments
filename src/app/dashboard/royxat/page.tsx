@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FileDown } from "lucide-react";
-import { isModerator, requireUserOrRedirect, scopeFilters } from "@/lib/authz";
+import { isRegionModerator, requireUserOrRedirect, scopeFilters } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { CHANNELS, HOLATLAR, channelByKey, holatLabel, isHolat, type Holat } from "@/lib/channels";
 import { parseFilters, filterParams, href, one, type SP } from "@/lib/filters";
@@ -19,11 +19,12 @@ const HOLAT_TONE: Record<string, string> = {
 };
 
 export default async function ListPage({ searchParams }: { searchParams: Promise<SP> }) {
-  const user = await requireUserOrRedirect();
+  // Moderatorga ochiq yagona sahifa.
+  const user = await requireUserOrRedirect({ moderator: true });
   if (!projectConfigured()) {
     return (
       <>
-        <PageHeader title="To'lovlar ro'yxati" refresh={!isModerator(user)} />
+        <PageHeader title="To'lovlar ro'yxati" />
         <NotConfigured />
       </>
     );
@@ -39,7 +40,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   if (!f) {
     return (
       <>
-        <PageHeader title="To'lovlar ro'yxati" refresh={!isModerator(user)} />
+        <PageHeader title="To'lovlar ro'yxati" />
         <ErrorBox message="Sizga hudud biriktirilmagan — super adminga murojaat qiling." />
       </>
     );
@@ -57,7 +58,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
 
   // Moderatorga hudud tanlovi o'rniga — qat'iy qiymat.
   const lockedRegion =
-    isModerator(user) && f.obl !== undefined
+    isRegionModerator(user) && f.obl !== undefined
       ? { value: String(f.obl), label: regions.find((r) => r.id === f.obl)?.name ?? `#${f.obl}` }
       : undefined;
 
@@ -79,7 +80,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   return (
     <div>
       <PageHeader
-        title="To'lovlar ro'yxati" refresh={!isModerator(user)}
+        title="To'lovlar ro'yxati"
         subtitle={`${ch.label} · ${holatLabel(holat)}${lockedRegion ? ` · ${lockedRegion.label}` : ""}`}
       />
 

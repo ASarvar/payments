@@ -3,6 +3,19 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.2.2 — 2026-09-15
+
+- **Respublika moderatori.** Yangi rol: hudud moderatori singari faqat "To'lovlar ro'yxati" va
+  Excel'ni ko'radi, lekin barcha hududlar bo'yicha (hudud tanlay oladi). Bazada migratsiya bor
+  (`Role` ga `REPUBLIC_MODERATOR`).
+
+- **Kod tekshiruvi tuzatishlari.** Moderator endi STANDART bo'yicha faqat ro'yxatga kiradi —
+  yangi sahifa o'z-o'zidan unga yopiq; "Yangilash" tugmasini sahifa emas, foydalanuvchi roli
+  hal qiladi. Foydalanuvchilar: `project` bazasi ishlamasa ham moderatorni bloklash/saqlash
+  mumkin (hudud o'zgarmagan bo'lsa); saqlanmagan rol xatodan keyin qatorda qolib ketmaydi;
+  yangi foydalanuvchi qo'shishda xato bo'lsa kiritilgan maydonlar (paroldan tashqari) saqlanadi.
+  Rol nomlari bitta joyda (`lib/roles.ts`).
+
 ## 0.2.1 — 2026-09-14
 
 - **Standart sana — 13.05.2025.** Sana berilmaganda barcha kanal va sahifalarda (umumiy

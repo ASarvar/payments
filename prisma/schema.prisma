@@ -20,10 +20,13 @@ datasource db {
 /// SUPER_ADMIN — hammasi + foydalanuvchilar va audit. ADMIN — barcha hisobotlar.
 /// MODERATOR — hudud moderatori (foydalanuvchi qarori, 2026-09-14): FAQAT "To'lovlar
 /// ro'yxati" va FAQAT o'z hududi (`regionId`), Excel ham shu hudud bilan (`lib/authz.ts`).
+/// REPUBLIC_MODERATOR — respublika moderatori (2026-09-15): xuddi shunday faqat ro'yxat, lekin
+/// BARCHA hududlar (`regionId` null).
 enum Role {
   SUPER_ADMIN
   ADMIN
   MODERATOR
+  REPUBLIC_MODERATOR
 }
 
 model User {

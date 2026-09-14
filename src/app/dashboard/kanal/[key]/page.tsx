@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Sigma, CheckCircle2, Hourglass, CircleDashed } from "lucide-react";
-import { requireAdminPage } from "@/lib/authz";
+import { requireUserOrRedirect } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { CHANNELS, channelByKey } from "@/lib/channels";
 import { parseFilters, filterParams, href, one, type SP } from "@/lib/filters";
@@ -75,7 +75,7 @@ export default async function ChannelPage({
   params: Promise<{ key: string }>;
   searchParams: Promise<SP>;
 }) {
-  await requireAdminPage();
+  await requireUserOrRedirect();
   const { key } = await params;
   const ch = channelByKey(key);
   if (!ch) notFound();

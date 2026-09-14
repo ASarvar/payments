@@ -16,7 +16,7 @@ const labelCls = "text-[11px] font-medium uppercase tracking-wide text-muted-for
  * ⚠️ `action` ATAYLAB berilmagan — GET forma joriy URL'ga yuboradi va production'dagi
  * `/payments` sub-path'i saqlanadi.
  * ⚠️ Bo'sh `dan` ham yuboriladi (`dan=`) — bu "sanani ataylab tozaladim" degani
- * (`lib/filters.ts`), aks holda QQS standart sanasi har safar qaytib kelardi.
+ * (`lib/filters.ts`), aks holda standart sana (`DEFAULT_FROM`) har safar qaytib kelardi.
  * ⚠️ Hudud o'zgarganda eski tuman qolib ketishi mumkin — sahifa uni o'sha hudud
  * tumanlari ro'yxatiga qarab tekshiradi va mos kelmasa tashlaydi.
  * `lockedRegion` — hudud moderatori uchun: tanlov o'rniga qat'iy qiymat (yashirin `hudud`

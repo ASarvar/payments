@@ -4,7 +4,9 @@ import { getRegions, type Option } from "@/server/services/payments";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   // ⚠️ Redirect qiladi (xato emas) — eskirgan sessiya login'ga tushsin.
-  const user = await requireUserOrRedirect();
+  // ⚠️ `moderator: true` SHART — aks holda moderator ro'yxatda ham layout orqali cheksiz
+  //    yo'naltirilardi. Sahifalarning o'zi moderatorni alohida tekshiradi.
+  const user = await requireUserOrRedirect({ moderator: true });
   const moderator = isModerator(user);
 
   // Moderatorga rol yonida hududi. `project` bazasi ishlamasa — faqat rol (menyu buzilmasin).

@@ -31,3 +31,9 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+/* Foydalanuvchilar: hudud tanlovi faqat "Hudud moderatori" tanlanganda (`UsersClient` → RoleFields).
+   JS holatisiz — forma amalidan keyin React maydonlarni qaytarganda ko'rinish ham o'zi to'g'rilanadi. */
+.role-fields:not(:has(option[value="MODERATOR"]:checked)) .role-region {
+  display: none;
+}

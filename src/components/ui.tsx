@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { refreshDataAction } from "@/app/dashboard/actions";
+import { getCurrentUser, isModerator } from "@/lib/authz";
 
 // Jadval klasslari — hamma sahifada bir xil ko'rinish.
 export const th = "px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground";
@@ -11,18 +12,7 @@ export const tdR = `${td} whitespace-nowrap text-right tabular-nums`;
 export const totalRow = "border-b border-border font-semibold";
 export const totalStyle = { background: "var(--gold-lighter)" } as const;
 
-export function PageHeader({
-  title,
-  subtitle,
-  children,
-  refresh = true,
-}: {
-  title: string;
-  subtitle?: ReactNode;
-  children?: ReactNode;
-  /** "Yangilash" tugmasi. ⚠️ Moderatorga `false` — `refreshDataAction` unga ruxsat bermaydi. */
-  refresh?: boolean;
-}) {
+export function PageHeader({ title, subtitle, children }: { title: string; subtitle?: ReactNode; children?: ReactNode }) {
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
@@ -33,24 +23,30 @@ export function PageHeader({
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {children}
-        {refresh ? <RefreshButton /> : null}
+        <RefreshButton />
       </div>
     </div>
   );
 }
 
-function RefreshButton() {
+/**
+ * "Yangilash" — faqat moderator EMASlarga (`refreshDataAction` ham `requireAdmin` bilan
+ * tekshiradi). Qaror shu yerda — sahifalar uni prop bilan eslab qolishi shart emas.
+ */
+async function RefreshButton() {
+  const user = await getCurrentUser();
+  if (!user || isModerator(user)) return null;
   return (
-        <form action={refreshDataAction}>
-          <button
-            type="submit"
-            title="Keshni tashlab, bazadan qayta hisoblash"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-slate-600 transition hover:bg-muted"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Yangilash
-          </button>
-        </form>
+    <form action={refreshDataAction}>
+      <button
+        type="submit"
+        title="Keshni tashlab, bazadan qayta hisoblash"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-slate-600 transition hover:bg-muted"
+      >
+        <RefreshCw className="h-4 w-4" />
+        Yangilash
+      </button>
+    </form>
   );
 }
 

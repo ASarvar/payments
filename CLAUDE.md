@@ -108,10 +108,14 @@ app/api/export/route.ts     Excel (oqim), ro'yxat bilan bir xil Selection
 
 Login + parol (email yo'q), ochiq ro'yxat yo'q. Rollar: `SUPER_ADMIN` (foydalanuvchilar,
 audit), `ADMIN`, `MODERATOR` — hudud moderatori (foydalanuvchi qarori, 2026-09-14): FAQAT
-"To'lovlar ro'yxati" va FAQAT o'z hududi (`User.regionId`, bitta), Excel ham shu hudud bilan.
-⚠️ Himoya `lib/authz.ts` da: sahifalarda `requireAdminPage()`, ro'yxat VA eksportda
-`scopeFilters()`. Yangi sahifa/route qo'shsangiz — moderatorni o'ylang (menyuda yashirish
-himoya emas). Rol va hudud har so'rovda bazadan o'qiladi. Sessiya JWT, **1 soat faolsizlik** (sirpanuvchi). Parol tiklansa
+"To'lovlar ro'yxati" va FAQAT o'z hududi (`User.regionId`, bitta), Excel ham shu hudud bilan;
+`REPUBLIC_MODERATOR` — respublika moderatori (2026-09-15): xuddi shunday faqat ro'yxat va Excel,
+lekin BARCHA hududlar (hudud biriktirilmaydi). `isModerator()` — ikkala tur (sahifa, menyu,
+"Yangilash"), `isRegionModerator()` — faqat hudud cheklovi (`scopeFilters`, qat'iy hudud maydoni).
+⚠️ Himoya `lib/authz.ts` da: `requireUserOrRedirect()` moderatorni STANDART bo'yicha ro'yxatga
+yuboradi (ochiq joylar `{ moderator: true }` bilan: dashboard layout va ro'yxat — layout'da SHART,
+aks holda cheksiz redirect), ro'yxat VA eksportda `scopeFilters()`. Yangi API route qo'shsangiz —
+moderatorni o'ylang: `getCurrentUser()` uni o'tkazadi (menyuda yashirish himoya emas). Rol va hudud har so'rovda bazadan o'qiladi. Sessiya JWT, **1 soat faolsizlik** (sirpanuvchi). Parol tiklansa
 `sessionVersion` +1 → barcha sessiyalar bekor. Login'ga 15 daqiqada 10 ta xato urinish.
 ⚠️ Cookie nomlari HAR DOIM `payments.*` — dev'da ham: localhost'da obyektlar ilovasi bor,
 cookie portga bog'lanmaydi.

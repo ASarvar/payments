@@ -3,6 +3,15 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.1 — 2026-09-15
+
+- **Biriktirish borishi** (Taqsimot ichida yangi yorliq). Mavjud tizimdagi "ijara to'lovlaridan
+  tushgan mablag'lar biriktirilishining borishi" hisoboti: hududlar bo'yicha tushum, biriktirilgan,
+  biriktirilmagan, "bir kunda" va 10 tur bo'yicha "shundan" (+ MUNIS orqali alohida ustun). Hisob
+  o'sha tizimniki bilan bir xil (serverda solishtirildi); "bir kunda" tanlangan oxirgi sana
+  bo'yicha. Excel shu shaklda (auditda). Serverda `payments_ro` ga yana ikki jadvalga o'qish
+  huquqi kerak (DEPLOY.md).
+
 ## 0.3.0 — 2026-09-15
 
 - **Taqsimot** (yangi bo'lim, hozircha faqat adminlar). To'lov hujjati (`paydocs`) ID si bo'yicha

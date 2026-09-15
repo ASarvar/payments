@@ -50,3 +50,8 @@ export function dmy(s: string | null | undefined, withTime = false): string {
 export function nowTashkent(): string {
   return new Date().toLocaleString("sv-SE", { timeZone: "Asia/Tashkent" });
 }
+
+/** Bugungi sana (Toshkent) "YYYY-MM-DD". */
+export function todayTashkent(): string {
+  return nowTashkent().slice(0, 10);
+}

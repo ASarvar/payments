@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { readOnly } from "@/lib/projectDb";
 import { CHANNELS, channelByRt } from "@/lib/channels";
 import { PAID_UZASBO_STATUS, isPaid } from "@/lib/uzasbo";
-import { PAGE_SIZE, PAYMENTS_CACHE_TAG, type Metric, type PaymentFilters } from "@/server/services/payments";
+import { PAGE_SIZE, PAYMENTS_CACHE_TAG, getRegions, type Metric, type PaymentFilters } from "@/server/services/payments";
 import { isoDate, isoTs, str, toNum, type Row } from "@/server/services/sqlUtil";
 
 /**
@@ -564,3 +564,124 @@ async function computeDoublePaid(): Promise<{ rows: DoublePaid[]; truncated: boo
 
 export const getDoublePaid = () =>
   unstable_cache(computeDoublePaid, ["taq-double-v2"], { revalidate: 3600, tags: [PAYMENTS_CACHE_TAG] })();
+
+// ── Biriktirish borishi (hududlar kesimida) ─────────────────────────────────
+
+/**
+ * "Ijara to'lovlaridan tushgan mablag'lar biriktirilishining borishi" — mavjud tizim (online-ijara.uz)
+ * hisobotining AYNAN o'sha ta'rifi (foydalanuvchi bergan SQL, 2026-09-15; jamilari serverda
+ * eski so'rov bilan tiyinigacha solishtirildi):
+ *   tushum        = paydocs.asum                   (state = 1, doc_date davrda, hujjat hududi)
+ *   biriktirilgan = payments.parsing_sum           (state = 1, doc_date davrda)
+ *                 + munis_receive_payment.real_sum (state = 1, status > NEW, created_at davrda)
+ *   shundan       = payments.*_sum turlari — MUNIS qismi turlarga bo'linmaydi (alohida ustun).
+ * Asl so'rovdan ATAYLAB farqi: "bir kunda" — `gacha` kuni (aslida MUNIS qismi `current_date` bo'yicha
+ * edi) va tushum = biriktirilgan + biriktirilmagan har doim bajariladi; asl so'rovdagi ishlatilmagan
+ * `payment_items` LATERAL'i olib tashlangan; `created_at` indeks ishlaydigan ko'rinishda.
+ * ⚠️ `payments` da tuman yo'q — faqat hududlar. Asl kabi faqat `lists` hududlari (id > 0).
+ */
+export const BIR_TYPES = [
+  { key: "rent", col: "rent_sum", label: "Ijara" },
+  { key: "penya", col: "penya_sum", label: "Penya" },
+  { key: "tax", col: "tax_sum", label: "Davlat boji" },
+  { key: "mail", col: "mail_sum", label: "Pochta" },
+  { key: "fine", col: "fine_sum", label: "Jarima" },
+  { key: "advance", col: "advance_sum", label: "Oldindan to'lov" },
+  { key: "unknown", col: "unknown_sum", label: "Aniqlanmagan" },
+  { key: "returned", col: "returned_sum", label: "Qaytgan (bal. saqlovchidan)" },
+  { key: "returned2", col: "returned_sum2", label: "Qaytarilgan (ijarachiga)" },
+  { key: "other", col: "other_sum", label: "Boshqa" },
+] as const;
+export type BirType = (typeof BIR_TYPES)[number]["key"];
+
+export interface BirAmounts {
+  tushum: number;
+  biriktirilgan: number;
+  /** tushum − biriktirilgan (manfiy — ortiqcha biriktirilgan). */
+  farq: number;
+}
+
+export interface BirRow extends BirAmounts {
+  id: number | null;
+  name: string;
+  /** `gacha` kuni. */
+  day: BirAmounts;
+  /** Biriktirilganning MUNIS orqali qismi. */
+  munis: number;
+  types: Record<BirType, number>;
+}
+
+function birRow(id: number | null, name: string, r: Row): BirRow {
+  const parsing = toNum(r.parsing);
+  const munis = toNum(r.munis);
+  const tushum = toNum(r.asum);
+  const dayT = toNum(r.asum_day);
+  const dayB = toNum(r.parsing_day) + toNum(r.munis_day);
+  const types = {} as Record<BirType, number>;
+  for (const t of BIR_TYPES) types[t.key] = toNum(r[t.key]);
+  return {
+    id,
+    name,
+    tushum,
+    biriktirilgan: parsing + munis,
+    farq: tushum - parsing - munis,
+    day: { tushum: dayT, biriktirilgan: dayB, farq: dayT - dayB },
+    munis,
+    types,
+  };
+}
+
+/** `from` bo'lmasa — boshlanish chegarasiz. Sanalar YYYY-MM-DD, ikkalasi ham QO'SHIB. */
+async function computeBiriktirish(from: string | undefined, to: string): Promise<BirRow[]> {
+  const since = (col: string) => (from ? Prisma.sql`AND ${Prisma.raw(col)} >= ${from}::date` : Prisma.empty);
+  const typeSums = Prisma.raw(BIR_TYPES.map((t) => `sum(${t.col}) AS "${t.key}"`).join(", "));
+  const typeCols = Prisma.raw(BIR_TYPES.map((t) => `p."${t.key}"`).join(", "));
+  const [rows, regions] = await Promise.all([
+    readOnly((tx) =>
+      tx.$queryRaw<Row[]>(Prisma.sql`
+        WITH d AS (
+          SELECT obl_id, sum(asum) AS asum, sum(asum) FILTER (WHERE doc_date = ${to}::date) AS asum_day
+          FROM paydocs WHERE state = 1 AND doc_date <= ${to}::date ${since("doc_date")}
+          GROUP BY obl_id
+        ), p AS (
+          SELECT obl_id, sum(parsing_sum) AS parsing,
+                 sum(parsing_sum) FILTER (WHERE doc_date = ${to}::date) AS parsing_day, ${typeSums}
+          FROM payments WHERE state = 1 AND doc_date <= ${to}::date ${since("doc_date")}
+          GROUP BY obl_id
+        ), m AS (
+          SELECT obl_id, sum(real_sum) AS munis, sum(real_sum) FILTER (WHERE created_at >= ${to}::date) AS munis_day
+          FROM munis_receive_payment
+          WHERE state = 1 AND status > 'NEW'::munis_receive_payment_status
+            AND created_at < ${to}::date + 1 ${since("created_at")}
+          GROUP BY obl_id
+        ), k AS (SELECT obl_id FROM d UNION SELECT obl_id FROM p UNION SELECT obl_id FROM m)
+        SELECT k.obl_id, d.asum, d.asum_day, p.parsing, p.parsing_day, ${typeCols}, m.munis, m.munis_day
+        FROM k LEFT JOIN d USING (obl_id) LEFT JOIN p USING (obl_id) LEFT JOIN m USING (obl_id)`),
+    ),
+    getRegions(),
+  ]);
+  const byObl = new Map(rows.map((r) => [Number(r.obl_id), r]));
+  return regions.filter((reg) => reg.id > 0).map((reg) => birRow(reg.id, reg.name, byObl.get(reg.id) ?? {}));
+}
+
+export const getBiriktirish = (from: string | undefined, to: string) =>
+  unstable_cache(computeBiriktirish, ["taq-bir-v1"], cacheOpts())(from, to);
+
+/** JAMI qatori. */
+export function totalBir(rows: BirRow[]): BirRow {
+  const add = (a: BirAmounts, b: BirAmounts): BirAmounts => ({
+    tushum: a.tushum + b.tushum,
+    biriktirilgan: a.biriktirilgan + b.biriktirilgan,
+    farq: a.farq + b.farq,
+  });
+  const zero = (): BirAmounts => ({ tushum: 0, biriktirilgan: 0, farq: 0 });
+  const t: BirRow = { id: null, name: "J A M I", ...zero(), day: zero(), munis: 0, types: {} as Record<BirType, number> };
+  for (const k of BIR_TYPES) t.types[k.key] = 0;
+  for (const r of rows) {
+    Object.assign(t, add(t, r));
+    t.day = add(t.day, r.day);
+    t.munis += r.munis;
+    for (const k of BIR_TYPES) t.types[k.key] += r.types[k.key];
+  }
+  return t;
+}

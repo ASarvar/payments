@@ -32,7 +32,8 @@ CREATE ROLE payments_ro LOGIN;
 \c project
 GRANT CONNECT ON DATABASE project TO payments_ro;
 GRANT USAGE ON SCHEMA public TO payments_ro;
-GRANT SELECT ON public.payment_items, public.lists, public.vw_all_contracts, public.paydocs, public.uzasbo_send TO payments_ro;
+GRANT SELECT ON public.payment_items, public.lists, public.vw_all_contracts, public.paydocs, public.uzasbo_send,
+                public.payments, public.munis_receive_payment TO payments_ro;
 ALTER ROLE payments_ro SET default_transaction_read_only = on;
 ```
 
@@ -92,11 +93,11 @@ sudo nginx -t && sudo systemctl reload nginx
 git pull && docker compose up -d --build
 ```
 
-Mavjud o'rnatishda "Taqsimot" bo'limi uchun `payments_ro` ga ikki jadval kerak (bir marta,
-`sudo -u postgres psql -d project`):
+Mavjud o'rnatishda "Taqsimot" bo'limi uchun `payments_ro` ga to'rt jadval kerak (bir marta,
+qayta bajarish zararsiz):
 
-```sql
-GRANT SELECT ON public.paydocs, public.uzasbo_send TO payments_ro;
+```bash
+sudo -u postgres psql -d project -c "GRANT SELECT ON public.paydocs, public.uzasbo_send, public.payments, public.munis_receive_payment TO payments_ro;"
 ```
 
 Migratsiya avtomatik (`migrate` servisi). ⚠️ `docker compose down -v` ishlatmang —

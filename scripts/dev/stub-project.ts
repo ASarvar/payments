@@ -51,6 +51,9 @@ async function main() {
   const p = new PrismaClient({ datasourceUrl: url });
   const run = (sql: string) => p.$executeRawUnsafe(sql);
   try {
+    await run("DROP TABLE IF EXISTS munis_receive_payment");
+    await run("DROP TYPE IF EXISTS munis_receive_payment_status");
+    await run("DROP TABLE IF EXISTS payments");
     await run("DROP TABLE IF EXISTS uzasbo_send");
     await run("DROP TYPE IF EXISTS uzasbo_send_status");
     await run("DROP TABLE IF EXISTS paydocs");
@@ -169,6 +172,43 @@ async function main() {
     await run(`INSERT INTO paydocs (id, doc_type, doc_num, doc_date, asum, cl_name, type, state, obl_id)
       SELECT 950000 + g, 2, g::text, current_date - g, round((random() * 5000000)::numeric, 2), 'Qaytarish ' || g, 'Возврат', 0, 26
       FROM generate_series(1, 200) g`);
+    // Bugungi kirimlar — "Biriktirish borishi"dagi "bir kunda" ustunlari uchun.
+    await run(`INSERT INTO paydocs (id, doc_type, doc_num, doc_date, asum, cl_name, type, state, obl_id)
+      SELECT 960000 + g, 1, g::text, current_date, round((random() * 3000000 + 100000)::numeric, 2), 'Bugungi to''lovchi ' || g,
+             'Поступление', 1, (ARRAY[3,6,14,26,27])[1 + g % 5]
+      FROM generate_series(1, 25) g`);
+
+    // ── payments: hujjatdan ajratilgan summa turlar bo'yicha — "Biriktirish borishi" manbai ──
+    await run(`CREATE TABLE payments (
+      id bigint PRIMARY KEY, doc_date date, asum numeric(18,2), cl_name varchar(250), parsing_sum numeric(18,2),
+      pay_id bigint, state int, obl_id int, created_at timestamp,
+      rent_sum numeric(18,2), penya_sum numeric(18,2), mail_sum numeric(18,2), tax_sum numeric(18,2), fine_sum numeric(18,2),
+      advance_sum numeric(18,2), unknown_sum numeric(18,2), returned_sum numeric(18,2), returned_sum2 numeric(18,2),
+      other_sum numeric(18,2), vat_sum numeric(18,2))`);
+    // ~90% hujjat shu yo'l bilan biriktirilgan (har 7-sida 10% qoldiq), qolgan 10% — MUNIS orqali.
+    await run(`INSERT INTO payments (id, doc_date, asum, cl_name, parsing_sum, pay_id, state, obl_id, created_at,
+                                     rent_sum, penya_sum, mail_sum, tax_sum, fine_sum, advance_sum, unknown_sum,
+                                     returned_sum, returned_sum2, other_sum, vat_sum)
+      SELECT 5000000 + x.id, x.doc_date, x.asum, x.cl_name, x.ps, x.id, 1, x.obl_id, x.created_at,
+             round(x.ps * 0.90, 2), round(x.ps * 0.03, 2), 0, 0, round(x.ps * 0.01, 2), round(x.ps * 0.02, 2),
+             round(x.ps * 0.01, 2), round(x.ps * 0.01, 2), round(x.ps * 0.005, 2),
+             x.ps - round(x.ps * 0.90, 2) - round(x.ps * 0.03, 2) - round(x.ps * 0.01, 2) - round(x.ps * 0.02, 2)
+                  - round(x.ps * 0.01, 2) - round(x.ps * 0.01, 2) - round(x.ps * 0.005, 2),
+             round(x.ps * 12 / 112, 2)
+      FROM (SELECT p.*, CASE WHEN p.id % 7 = 0 THEN round(p.asum * 0.9, 2) ELSE p.asum END AS ps
+            FROM paydocs p WHERE p.state = 1 AND p.id % 10 <> 0) x`);
+
+    // ── munis_receive_payment: MUNIS orqali kelgan to'lovlar (holati ENUM, tartibi serverdagidek) ──
+    await run(`CREATE TYPE munis_receive_payment_status AS ENUM ('NEW', 'UPDATED', 'DISTRIBUTED')`);
+    await run(`CREATE TABLE munis_receive_payment (
+      id bigint PRIMARY KEY, state int DEFAULT 1, created_at timestamp DEFAULT now(),
+      status munis_receive_payment_status NOT NULL DEFAULT 'NEW', obl_id int, area_id int, real_sum numeric, pay_id bigint)`);
+    // 80% — DISTRIBUTED, 10% — UPDATED, 10% — NEW (NEW hisobotga kirmaydi).
+    await run(`INSERT INTO munis_receive_payment (id, created_at, status, obl_id, area_id, real_sum, pay_id)
+      SELECT 8000000 + p.id, p.doc_date + (p.id % 20) * interval '1 hour',
+             (CASE WHEN p.id % 100 < 80 THEN 'DISTRIBUTED' WHEN p.id % 100 < 90 THEN 'UPDATED' ELSE 'NEW' END)::munis_receive_payment_status,
+             p.obl_id, p.area_id, p.asum, p.id
+      FROM paydocs p WHERE p.state = 1 AND p.id % 10 = 0`);
 
     // ── uzasbo_send: g'aznachilikka topshiriqnomalar (serverdagi nom, tip va GIN indeks ifodasi) ──
     await run(`CREATE TYPE uzasbo_send_status AS ENUM ('CREATED', 'SENT', 'REJECTED', 'RECREATED', 'DELETED')`);

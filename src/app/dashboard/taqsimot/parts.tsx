@@ -4,6 +4,7 @@ import { nf } from "@/lib/format";
 
 const TABS = [
   { key: "hujjat", href: "/dashboard/taqsimot", label: "Hujjat bo'yicha" },
+  { key: "biriktirish", href: "/dashboard/taqsimot/biriktirish", label: "Biriktirish borishi" },
   { key: "muammoli", href: "/dashboard/taqsimot/muammoli", label: "Muammoli hujjatlar" },
   { key: "takroriy", href: "/dashboard/taqsimot/takroriy", label: "Ikki marta to'langan" },
 ] as const;

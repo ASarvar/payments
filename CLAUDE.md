@@ -109,7 +109,14 @@ Bitta to'lov hujjati pulining yo'li. Hozircha FAQAT adminlar (foydalanuvchi qaro
 - `recreated` — yangi topshiriqnomada, RAD ETILGAN eskisining id si. G'aznachilik sanasi rad
   etilganlarda ham bor — "oxirgi to'lov" faqat to'langanlardan. 12 kanal yig'indisi = `asum` (~98%).
 - `payment_items.doc_id` — `pay_id` EMAS (birortasi ham mos emas).
-- `payments_ro` ga `paydocs` va `uzasbo_send` uchun ham `GRANT SELECT` kerak (DEPLOY.md).
+- **Biriktirish borishi** (hududlar kesimi) — mavjud tizim hisobotining AYNAN o'sha ta'rifi (foydalanuvchi
+  SQL'i): tushum = `paydocs`, biriktirilgan = `payments.parsing_sum` + `munis_receive_payment.real_sum`
+  (status > NEW, `created_at` bo'yicha), "shundan" = `payments.*_sum` (MUNIS qismi alohida ustun).
+  Ataylab farqi: "bir kunda" = `gacha` kuni (aslida MUNIS `current_date`) va tushum = biriktirilgan +
+  biriktirilmagan. `payments` da tuman YO'Q. `pay_type` 1..10 (`payment_items`, `munis`) — xuddi shu
+  10 tur tartibida. `munis_receive_payment.status` — ENUM (NEW < UPDATED < DISTRIBUTED).
+- `payments_ro` ga `paydocs`, `uzasbo_send`, `payments`, `munis_receive_payment` uchun ham `GRANT SELECT`
+  kerak (DEPLOY.md).
 
 ## Arxitektura
 
@@ -120,10 +127,12 @@ lib/uzasbo.ts               g'aznachilik holatlari (to'langan = SENT + 4), holat
 lib/filters.ts              URL ↔ filtr (dan/gacha/hudud/tuman), href()
 server/services/payments.ts BARCHA SQL (to'lovlar): matritsa, hudud/tuman kesimi, qarz yoshi,
                             shartnoma muammolari, ro'yxat, eksport bo'laklari
-server/services/taqsimot.ts BARCHA SQL (taqsimot): hujjat, muammoli hujjatlar, ikki marta to'langan
-app/dashboard/              umumiy · kanal/[key] · royxat · taqsimot (hujjat/muammoli/takroriy) · users · audit
+server/services/taqsimot.ts BARCHA SQL (taqsimot): hujjat, biriktirish borishi, muammoli hujjatlar,
+                            ikki marta to'langan
+app/dashboard/              umumiy · kanal/[key] · royxat · taqsimot (hujjat/biriktirish/muammoli/takroriy)
+                            · users · audit
 app/api/export/route.ts     Excel (oqim), ro'yxat bilan bir xil Selection
-app/api/taqsimot/route.ts   Bitta hujjat taqsimoti — Excel (4 varaq)
+app/api/taqsimot/…          Excel: bitta hujjat taqsimoti (4 varaq) · biriktirish borishi
 ```
 
 - ⚠️ Ustun nomlari SQL'ga faqat `CHANNELS` dan (`Prisma.raw`); qiymatlar doim parametr.

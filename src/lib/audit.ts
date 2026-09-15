@@ -21,6 +21,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   EXPORT: "Excel eksport",
   EXPORT_TAQSIMOT: "Taqsimot Excel",
   EXPORT_BIRIKTIRISH: "Biriktirish borishi Excel",
+  EXPORT_BIRIKTIRISH_DOCS: "Biriktirish — hujjatlar Excel",
+  EXPORT_SHARTNOMALAR: "Shartnomalar bo'yicha Excel",
   REFRESH_CACHE: "Ma'lumotni yangiladi",
   CREATE_USER: "Foydalanuvchi qo'shdi",
   RESET_PASSWORD: "Parolni tikladi",

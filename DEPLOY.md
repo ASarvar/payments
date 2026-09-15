@@ -33,7 +33,7 @@ CREATE ROLE payments_ro LOGIN;
 GRANT CONNECT ON DATABASE project TO payments_ro;
 GRANT USAGE ON SCHEMA public TO payments_ro;
 GRANT SELECT ON public.payment_items, public.lists, public.vw_all_contracts, public.paydocs, public.uzasbo_send,
-                public.payments, public.munis_receive_payment TO payments_ro;
+                public.payments, public.munis_receive_payment, public.vw_contracts, public.billing TO payments_ro;
 ALTER ROLE payments_ro SET default_transaction_read_only = on;
 ```
 
@@ -93,12 +93,15 @@ sudo nginx -t && sudo systemctl reload nginx
 git pull && docker compose up -d --build
 ```
 
-Mavjud o'rnatishda "Taqsimot" bo'limi uchun `payments_ro` ga to'rt jadval kerak (bir marta,
-qayta bajarish zararsiz):
+Mavjud o'rnatishda "Taqsimot" va "Shartnomalar" bo'limlari uchun `payments_ro` ga olti manba kerak
+(bir marta, qayta bajarish zararsiz):
 
 ```bash
-sudo -u postgres psql -d project -c "GRANT SELECT ON public.paydocs, public.uzasbo_send, public.payments, public.munis_receive_payment TO payments_ro;"
+sudo -u postgres psql -d project -c "GRANT SELECT ON public.paydocs, public.uzasbo_send, public.payments, public.munis_receive_payment, public.vw_contracts, public.billing TO payments_ro;"
 ```
+
+⚠️ `vw_contracts` — ko'rinish. `SELECT reloptions FROM pg_class WHERE relname = 'vw_contracts';` bo'sh
+bo'lsa, ortidagi jadvallarga huquq kerak emas (`security_invoker` bo'lsa — ularga ham `SELECT`).
 
 Migratsiya avtomatik (`migrate` servisi). ⚠️ `docker compose down -v` ishlatmang —
 volume yo'q, lekin odat bo'lib qolmasin (obyektlar ilovasida u butun bazani o'chiradi).

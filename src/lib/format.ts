@@ -16,6 +16,12 @@ export function sum(n: number): string {
   return nf(Math.round(n));
 }
 
+/** Million so'm, bir xona (hisobot jadvallari uchun); "-0,0" chiqmasin. */
+export function mln(n: number): string {
+  const v = Math.round(n / 1e5) / 10;
+  return nf(v === 0 ? 0 : v, 1);
+}
+
 /** Katta summa — qiymat va birlik ALOHIDA (KPI kartada turli o'lchamda chiziladi). */
 export function money(n: number): { value: string; unit: string } {
   const a = Math.abs(n);

@@ -51,6 +51,8 @@ async function main() {
   const p = new PrismaClient({ datasourceUrl: url });
   const run = (sql: string) => p.$executeRawUnsafe(sql);
   try {
+    await run("DROP TABLE IF EXISTS billing");
+    await run("DROP TABLE IF EXISTS vw_contracts");
     await run("DROP TABLE IF EXISTS munis_receive_payment");
     await run("DROP TYPE IF EXISTS munis_receive_payment_status");
     await run("DROP TABLE IF EXISTS payments");
@@ -100,6 +102,7 @@ async function main() {
       id bigint PRIMARY KEY, obl_id int, area_id int, contract_id bigint NOT NULL,
       asum numeric(18,2) NOT NULL, vat_sum numeric(18,4) NOT NULL, state int,
       created_at timestamp, updated_at timestamp, pay_id bigint, doc_date date NOT NULL, owner_tin bigint,
+      ayear int, pay_type int,
       ${chCols})`);
 
     const insertCols = CHANNELS.flatMap((c) => (c.key === "vat" ? [c.accept] : [c.sum, c.accept]));
@@ -111,7 +114,7 @@ async function main() {
       return c.key === "vat" ? [acc] : [SHARE[c.key], acc];
     });
     await run(`INSERT INTO payment_items (id, obl_id, area_id, contract_id, asum, vat_sum, state, created_at, updated_at,
-                                          pay_id, doc_date, owner_tin, ${insertCols.join(", ")})
+                                          pay_id, doc_date, owner_tin, ayear, pay_type, ${insertCols.join(", ")})
       SELECT b.id, b.obl,
              -- (id / 15), (id % 5) EMAS: hudud id % 15 bilan tanlanadi, 5 esa 15 ni
              -- bo'ladi — har hududga faqat BITTA tuman tushib qolardi.
@@ -121,6 +124,8 @@ async function main() {
              LEAST(b.doc + (random() * interval '20 days'), localtimestamp),
              LEAST(b.doc + (random() * interval '40 days'), localtimestamp),
              100000 + b.grp, b.doc, 200000000 + (b.cid % 700),
+             -- to'lov yili va turi (1 — ijara, 2 — penya, 5 — jarima): "Shartnomalar bo'yicha" uchun.
+             EXTRACT(YEAR FROM b.doc)::int, CASE WHEN b.id % 10 = 0 THEN 2 WHEN b.id % 97 = 0 THEN 5 ELSE 1 END,
              ${insertVals.join(", ")}
       FROM (
         SELECT g AS id,
@@ -209,6 +214,28 @@ async function main() {
              (CASE WHEN p.id % 100 < 80 THEN 'DISTRIBUTED' WHEN p.id % 100 < 90 THEN 'UPDATED' ELSE 'NEW' END)::munis_receive_payment_status,
              p.obl_id, p.area_id, p.asum, p.id
       FROM paydocs p WHERE p.state = 1 AND p.id % 10 = 0`);
+
+    // ── vw_contracts + billing: "Shartnomalar bo'yicha" manbalari (serverda vw_contracts — VIEW) ──
+    // Faqat ilova o'qiydigan ustunlar. Saldo = ijara + penya qoldig'i: manfiy — debitor, musbat — kreditor.
+    await run(`CREATE TABLE vw_contracts (
+      id bigint, obl_id int, asum numeric(18,2), saldo numeric(18,2), rent numeric(18,2), penya numeric(18,2),
+      state int, doc_status int, doc_year int, type int)`);
+    await run(`INSERT INTO vw_contracts (id, obl_id, asum, saldo, rent, penya, state, doc_status, doc_year, type)
+      SELECT g, (ARRAY[35,3,6,8,10,12,14,18,22,24,27,30,33,26])[1 + g % 14],
+             round((random() * 50000000 + 1000000)::numeric, 2), 0, 0, 0,
+             CASE WHEN random() < 0.95 THEN 1 ELSE 0 END, CASE WHEN random() < 0.9 THEN 3 ELSE 1 END,
+             2023 + g % 4, 1 + g % 3
+      FROM generate_series(1, 12000) g`);
+    await run(`UPDATE vw_contracts SET rent = round(((random() - 0.6) * asum * 0.2)::numeric, 2),
+                                       penya = round(((random() - 0.7) * asum * 0.01)::numeric, 2)`);
+    await run(`UPDATE vw_contracts SET saldo = rent + penya`);
+    await run(`CREATE TABLE billing (
+      id bigserial PRIMARY KEY, obl_id int, contract_id bigint, ayear int,
+      debit_sum numeric(18,2), credit_sum numeric(18,2), penya numeric(18,2), state int DEFAULT 1)`);
+    await run(`INSERT INTO billing (obl_id, contract_id, ayear, debit_sum, credit_sum, penya)
+      SELECT obl_id, id, doc_year, round(asum * 0.5, 2), round((asum * (0.4 + random() * 0.2))::numeric, 2),
+             round((random() * asum * 0.02)::numeric, 2)
+      FROM vw_contracts WHERE state = 1`);
 
     // ── uzasbo_send: g'aznachilikka topshiriqnomalar (serverdagi nom, tip va GIN indeks ifodasi) ──
     await run(`CREATE TYPE uzasbo_send_status AS ENUM ('CREATED', 'SENT', 'REJECTED', 'RECREATED', 'DELETED')`);

@@ -6,7 +6,7 @@ import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, href, type SP } from "@/lib/filters";
 import { withBase } from "@/lib/basePath";
 import { BIR_TYPES, getBiriktirish, totalBir, type BirRow } from "@/server/services/taqsimot";
-import { dmy, money, nf, pct1, todayTashkent } from "@/lib/format";
+import { dmy, mln, money, pct1, todayTashkent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { KpiCard } from "@/components/KpiCard";
 import { FilterBar } from "@/components/FilterBar";
@@ -14,12 +14,6 @@ import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, 
 import { TaqsimotNav } from "../parts";
 
 const PATH = "/dashboard/taqsimot/biriktirish";
-
-/** Million so'm, bir xona — asl hisobotdagidek ("-0,0" chiqmasin). */
-function mln(n: number): string {
-  const v = Math.round(n / 1e5) / 10;
-  return nf(v === 0 ? 0 : v, 1);
-}
 
 /** Ko'rsatishda 0,0 ga yaxlitlanadigan farq — rang berilmaydi. */
 const isZero = (n: number) => Math.abs(n) < 50_000;

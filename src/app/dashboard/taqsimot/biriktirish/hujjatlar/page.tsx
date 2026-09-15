@@ -18,6 +18,7 @@ import {
 import { dmy, nf, sum, todayTashkent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FilterBar } from "@/components/FilterBar";
+import { ExcelLink } from "@/components/ExcelLink";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, totalStyle } from "@/components/ui";
 import { Crumbs, Pager, TaqsimotNav } from "../../parts";
 
@@ -129,6 +130,7 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
         <>
           <Card
             title={`${nf(summary.n)} ta hujjat`}
+            right={<ExcelLink href={href("/api/taqsimot/biriktirish/hujjatlar", base)} />}
             subtitle={
               <>
                 Tushum <strong>{sum(summary.tushum)}</strong> · biriktirilgan {sum(summary.biriktirilgan)} · biriktirilmagan{" "}

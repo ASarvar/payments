@@ -121,6 +121,17 @@ Bitta to'lov hujjati pulining yo'li. Hozircha FAQAT adminlar (foydalanuvchi qaro
 - `payments_ro` ga `paydocs`, `uzasbo_send`, `payments`, `munis_receive_payment` uchun ham `GRANT SELECT`
   kerak (DEPLOY.md).
 
+## Shartnomalar bo'yicha (2026-09-15)
+
+Mavjud tizimdagi "yilda hisoblangan ijara to'lovlari va penyalar" — AYNAN o'sha ta'rif (foydalanuvchi
+SQL'i, `server/services/shartnomalar.ts`). Hozircha faqat adminlar.
+- shartnomalar va qarzdorlik — `vw_contracts` (⚠️ `vw_all_contracts` EMAS): state = 1, doc_status = 3,
+  doc_year = yil, type IN (1, 2); debitor = |saldo| (saldo < 0; ijara/penya — |rent|, |penya|), kreditor = saldo > 0.
+- hisoblandi — `billing` (state = 1, ayear = yil): ijara = `credit_sum`, penya = `penya`.
+- to'landi — `payment_items` (ayear = yil, pay_type 1 = ijara, 2 = penya); "bir kunda" — BUGUN (asl kabi).
+- ⚠️ `vw_contracts.doc_year` va `billing.ayear` tipi tasdiqlanmagan — `::text` bilan solishtiriladi.
+- `payments_ro` ga `vw_contracts` va `billing` uchun `GRANT SELECT` kerak (DEPLOY.md).
+
 ## Arxitektura
 
 ```
@@ -134,8 +145,10 @@ server/services/taqsimot.ts BARCHA SQL (taqsimot): hujjat, biriktirish borishi, 
                             ikki marta to'langan
 app/dashboard/              umumiy · kanal/[key] · royxat · taqsimot (hujjat/biriktirish/muammoli/takroriy)
                             · users · audit
+server/services/shartnomalar.ts  BARCHA SQL (shartnomalar bo'yicha): hisoblangan/to'langan/qarzdorlik
 app/api/export/route.ts     Excel (oqim), ro'yxat bilan bir xil Selection
-app/api/taqsimot/…          Excel: bitta hujjat taqsimoti (4 varaq) · biriktirish borishi
+app/api/taqsimot/…          Excel: bitta hujjat taqsimoti (4 varaq) · biriktirish borishi · hujjatlar
+app/api/shartnomalar        Excel: shartnomalar bo'yicha
 ```
 
 - ⚠️ Ustun nomlari SQL'ga faqat `CHANNELS` dan (`Prisma.raw`); qiymatlar doim parametr.

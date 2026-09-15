@@ -803,6 +803,23 @@ async function computeBirDocSummary(sel: BirDocSel): Promise<BirDocSummary> {
 export const getBirDocSummary = (sel: BirDocSel) =>
   unstable_cache(computeBirDocSummary, ["taq-bir-docs-sum-v1"], cacheOpts())(sel);
 
+function birDocRow(r: Row): BirDoc {
+  const tushum = toNum(r.asum);
+  const bir = toNum(r.bir);
+  return {
+    id: String(r.id),
+    docDate: isoDate(r.doc_date),
+    docNum: str(r.doc_num),
+    payer: str(r.cl_name),
+    note: str(r.anote),
+    tushum,
+    biriktirilgan: bir,
+    farq: tushum - bir,
+    munis: toNum(r.munis),
+    types: birTypes(r),
+  };
+}
+
 async function computeBirDocPage(sel: BirDocSel, page: number): Promise<BirDoc[]> {
   const { cte, where } = birDocQuery(sel);
   const rows = await readOnly((tx) =>
@@ -811,22 +828,19 @@ async function computeBirDocPage(sel: BirDocSel, page: number): Promise<BirDoc[]
       ORDER BY x.doc_date DESC NULLS LAST, x.id DESC
       LIMIT ${PAGE_SIZE}::int OFFSET ${(page - 1) * PAGE_SIZE}::int`),
   );
-  return rows.map((r) => {
-    const tushum = toNum(r.asum);
-    const bir = toNum(r.bir);
-    return {
-      id: String(r.id),
-      docDate: isoDate(r.doc_date),
-      docNum: str(r.doc_num),
-      payer: str(r.cl_name),
-      note: str(r.anote),
-      tushum,
-      biriktirilgan: bir,
-      farq: tushum - bir,
-      munis: toNum(r.munis),
-      types: birTypes(r),
-    };
-  });
+  return rows.map(birDocRow);
+}
+
+/** Excel uchun — barcha mos hujjatlar, sana bo'yicha O'SIB (eski tizimdagidek), keshsiz. */
+export async function listBirDocs(sel: BirDocSel, limit: number): Promise<BirDoc[]> {
+  const { cte, where } = birDocQuery(sel);
+  const rows = await readOnly((tx) =>
+    tx.$queryRaw<Row[]>(Prisma.sql`${cte}
+      SELECT x.* FROM x WHERE ${where}
+      ORDER BY x.doc_date NULLS LAST, x.id
+      LIMIT ${limit}::int`),
+  );
+  return rows.map(birDocRow);
 }
 
 export const getBirDocPage = (sel: BirDocSel, page: number) =>

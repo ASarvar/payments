@@ -3,6 +3,15 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.3 — 2026-09-15
+
+- **Shartnomalar bo'yicha** (yangi menyu, hozircha faqat adminlar). Mavjud tizimdagi "yilda
+  hisoblangan ijara to'lovlari va penyalar" hisoboti: hududlar bo'yicha shartnomalar soni va
+  summasi, hisoblangan (ijara, penya), to'langan (bir kunda va yil davomida), debitor va kreditor
+  qarzdorlik. Hisob o'sha tizimniki bilan bir xil; yil tanlanadi. Excel shu shaklda (auditda).
+- **Biriktirish — hujjatlar ro'yxatiga Excel** (filtrlar bilan, auditda).
+- Serverda `payments_ro` ga yana ikki manbaga o'qish huquqi kerak (`vw_contracts`, `billing`).
+
 ## 0.3.2 — 2026-09-15
 
 - **Biriktirish borishi — zina bo'yicha ochiladi** (eski tizimdagidek): respublika jadvalida hudud

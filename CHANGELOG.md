@@ -3,6 +3,17 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.0 — 2026-09-15
+
+- **Taqsimot** (yangi bo'lim, hozircha faqat adminlar). To'lov hujjati (`paydocs`) ID si bo'yicha
+  pulining yo'li: qaysi shartnomalarga biriktirilgani, 12 kanalga bo'linishi va har bir ulush
+  g'aznachilikka topshiriqnoma bilan yuborilib, **haqiqatan to'langan**-to'lanmagani (rad etish
+  sababi, g'aznachilik sanasi bilan). Hujjat summasi va qismlar yig'indisi solishtiriladi.
+  Qo'shimcha: **muammoli hujjatlar** (taqsimlanmagan, qisman, ortiqcha taqsimlangan) va **ikki marta
+  to'langan** balansda saqlovchi ulushlari ro'yxati; hujjat taqsimoti Excel'ga (auditda). "To'lovlar ro'yxati"dagi
+  to'lov raqami endi Taqsimot sahifasini ochadi. Serverda `payments_ro` ga ikki jadvalga o'qish
+  huquqi kerak (DEPLOY.md).
+
 ## 0.2.2 — 2026-09-15
 
 - **Respublika moderatori.** Yangi rol: hudud moderatori singari faqat "To'lovlar ro'yxati" va

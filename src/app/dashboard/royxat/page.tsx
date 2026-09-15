@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FileDown } from "lucide-react";
-import { isRegionModerator, requireUserOrRedirect, scopeFilters } from "@/lib/authz";
+import { isModerator, isRegionModerator, requireUserOrRedirect, scopeFilters } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { CHANNELS, HOLATLAR, channelByKey, holatLabel, isHolat, type Holat } from "@/lib/channels";
 import { parseFilters, filterParams, href, one, type SP } from "@/lib/filters";
@@ -153,7 +153,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
                     </td>
                   </tr>
                 ) : (
-                  data.rows.map((r) => <Row key={r.id} r={r} />)
+                  data.rows.map((r) => <Row key={r.id} r={r} taqsimot={!isModerator(user)} />)
                 )}
               </tbody>
             </table>
@@ -187,13 +187,28 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   );
 }
 
-function Row({ r }: { r: PaymentRow }) {
+/** `taqsimot` — to'lov raqami Taqsimot sahifasiga havola (u faqat adminlarga ochiq). */
+function Row({ r, taqsimot }: { r: PaymentRow; taqsimot: boolean }) {
   const h = rowHolatLabel(r);
   return (
     <tr className="border-b border-border last:border-0">
       <td className={`${td} tabular-nums`}>
         <div className="font-medium text-slate-800">{r.id}</div>
-        <div className="text-[11px] text-muted-foreground">to&apos;lov #{r.payId ?? "—"}</div>
+        <div className="text-[11px] text-muted-foreground">
+          to&apos;lov #
+          {r.payId && taqsimot ? (
+            <Link
+              href={href("/dashboard/taqsimot", { id: r.payId, qism: r.id })}
+              title="Taqsimotni ko'rish"
+              className="hover:underline"
+              style={{ color: "var(--cobalt)" }}
+            >
+              {r.payId}
+            </Link>
+          ) : (
+            (r.payId ?? "—")
+          )}
+        </div>
       </td>
       <td className={`${td} whitespace-nowrap tabular-nums`}>{dmy(r.docDate)}</td>
       <td className={`${td} whitespace-nowrap tabular-nums`}>{dmy(r.createdAt, true)}</td>

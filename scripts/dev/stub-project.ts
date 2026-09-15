@@ -14,7 +14,9 @@
  *   - hisob raqami/MFO'si yo'q shartnomalar (~5%);
  *   - `vw_all_contracts` da DUBLIKAT id'lar — summalar ko'paymasligini tekshirish uchun;
  *   - `state = 0` (bekor) yozuvlar (~10%) — hisobotga kirmasligi kerak;
- *   - `sent_*` da `false` ham, `NULL` ham.
+ *   - `sent_*` da `false` ham, `NULL` ham;
+ *   - Taqsimot: qismi yo'q / qisman / ortiqcha taqsimlangan hujjatlar, rad etilgan va qayta
+ *     yaratilgan, IKKI MARTA to'langan topshiriqnomalar, belgisi bor-u topshiriqnomasiz ulushlar (~2%).
  */
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
@@ -49,6 +51,9 @@ async function main() {
   const p = new PrismaClient({ datasourceUrl: url });
   const run = (sql: string) => p.$executeRawUnsafe(sql);
   try {
+    await run("DROP TABLE IF EXISTS uzasbo_send");
+    await run("DROP TYPE IF EXISTS uzasbo_send_status");
+    await run("DROP TABLE IF EXISTS paydocs");
     await run("DROP TABLE IF EXISTS payment_items");
     await run("DROP TABLE IF EXISTS lists");
     await run("DROP TABLE IF EXISTS vw_all_contracts");
@@ -112,7 +117,7 @@ async function main() {
              -- Kelajakdagi vaqt bo'lmasin ("oxirgi biriktirish" bugundan keyin chiqmasin).
              LEAST(b.doc + (random() * interval '20 days'), localtimestamp),
              LEAST(b.doc + (random() * interval '40 days'), localtimestamp),
-             b.id * 7 + 100000, b.doc, 200000000 + (b.cid % 700),
+             100000 + b.grp, b.doc, 200000000 + (b.cid % 700),
              ${insertVals.join(", ")}
       FROM (
         SELECT g AS id,
@@ -120,7 +125,9 @@ async function main() {
                1 + ((g::bigint * 31) % 8400) AS cid,
                round((random() * 9900000 + 100000)::numeric, 2) AS asum,
                CASE WHEN random() < 0.9 THEN 1 ELSE 0 END AS state,
-               date '2023-08-01' + (random() * (current_date - date '2023-08-01'))::int AS doc
+               -- Bitta to'lov hujjati (pay_id) — uchta qism (g, g+15, g+30): bir hudud, bir sana.
+               (g % 15) + 15 * (g / 45) AS grp,
+               date '2023-08-01' + ((((g % 15) + 15 * (g / 45))::bigint * 7919) % (current_date - date '2023-08-01'))::int AS doc
         FROM generate_series(1, ${ROWS}) g
       ) b`);
 
@@ -134,14 +141,117 @@ async function main() {
     await run(`UPDATE payment_items SET ${sentSet}`);
 
     await run("CREATE INDEX ON payment_items (state, obl_id, doc_date, area_id)");
+
+    // ── paydocs: to'lov hujjatlari. Summa = faol qismlar yig'indisi (hammasi bekor bo'lsa — barchasi) ──
+    await run(`CREATE TABLE paydocs (
+      id bigint PRIMARY KEY, doc_type int, doc_num varchar, doc_date date, asum numeric(18,2),
+      cl_name varchar, ca_name varchar, anote varchar(800), type varchar(100),
+      created_at timestamp DEFAULT now(), state int, obl_id int, area_id int)`);
+    await run(`INSERT INTO paydocs (id, doc_type, doc_num, doc_date, asum, cl_name, ca_name, anote, type, created_at, state, obl_id, area_id)
+      SELECT pi.pay_id, 1, (pi.pay_id % 97)::text, min(pi.doc_date),
+             COALESCE(sum(pi.asum) FILTER (WHERE pi.state = 1), sum(pi.asum)),
+             (300000000 + pi.pay_id % 700) || ' MCHJ "SOXTA TO''LOVCHI ' || (pi.pay_id % 700) || '" 2020800020'
+               || lpad(pi.pay_id::text, 10, '0') || ' 01125',
+             '201122919 Иктисодиёт ва молия вазирлигининг Ягона газна хисобвараги 23402000300100001010 00014',
+             '09510~401421860262737041908021001~201502223~09510 Оплата по аренде согласно договора № '
+               || min(pi.contract_id) || '#FID=' || pi.pay_id,
+             'Поступление', min(pi.created_at), 1, max(pi.obl_id), max(pi.area_id)
+      FROM payment_items pi GROUP BY pi.pay_id`);
+    // Ataylab: ~1% qisman (summa oshirilgan), ~0.5% ortiqcha (kamaytirilgan), qismsiz va bekor hujjatlar.
+    await run(`UPDATE paydocs SET asum = asum + round((random() * 500000 + 1000)::numeric, 2) WHERE id % 101 = 0`);
+    await run(`UPDATE paydocs SET asum = round(asum * 0.8, 2) WHERE id % 211 = 0 AND id % 101 <> 0`);
+    await run(`INSERT INTO paydocs (id, doc_type, doc_num, doc_date, asum, cl_name, ca_name, anote, type, state, obl_id)
+      SELECT 900000 + g, 1, g::text, date '2023-08-01' + (g * 37 % (current_date - date '2023-08-01')),
+             round((random() * 9000000 + 100000)::numeric, 2), 'TAQSIMLANMAGAN TO''LOVCHI ' || g, 'Ягона газна хисобвараги',
+             'Shartnoma raqami ko''rsatilmagan to''lov', 'Поступление', 1,
+             (ARRAY[35,3,6,8,10,12,14,18,22,24,27,30,33,26,0])[1 + (g % 15)]
+      FROM generate_series(1, 300) g`);
+    await run(`INSERT INTO paydocs (id, doc_type, doc_num, doc_date, asum, cl_name, type, state, obl_id)
+      SELECT 950000 + g, 2, g::text, current_date - g, round((random() * 5000000)::numeric, 2), 'Qaytarish ' || g, 'Возврат', 0, 26
+      FROM generate_series(1, 200) g`);
+
+    // ── uzasbo_send: g'aznachilikka topshiriqnomalar (serverdagi nom, tip va GIN indeks ifodasi) ──
+    await run(`CREATE TYPE uzasbo_send_status AS ENUM ('CREATED', 'SENT', 'REJECTED', 'RECREATED', 'DELETED')`);
+    await run(`CREATE TABLE uzasbo_send (
+      id bigserial PRIMARY KEY, state int DEFAULT 1, created_at timestamp DEFAULT now(),
+      obl_id int NOT NULL, area_id int, date_from date NOT NULL, date_to date NOT NULL,
+      receiver_type int NOT NULL, receiver_sum numeric(18,2) NOT NULL, receiver_name varchar(70) NOT NULL,
+      payment_items_id varchar, status uzasbo_send_status NOT NULL DEFAULT 'CREATED',
+      uzasbo_status int, uzasbo_reason varchar, uzasbo_num int, uzasbo_treas_oper_date date, recreated bigint)`);
+    // Balansda saqlovchiga — har qism alohida; qolgan kanallar — hudud × oy bo'yicha birlashtirilgan.
+    // `id % 50 = 0` — belgisi bor, lekin topshiriqnomaga kirmagan ulushlar (ataylab).
+    for (const c of CHANNELS) {
+      const name = c.label.replace(/'/g, "''");
+      if (c.key === "owner") {
+        await run(`INSERT INTO uzasbo_send (obl_id, area_id, date_from, date_to, receiver_type, receiver_sum, receiver_name,
+                                            payment_items_id, created_at)
+          SELECT COALESCE(pi.obl_id, 0), pi.area_id, pi.doc_date, pi.doc_date, ${c.rt}, pi.${c.sum},
+                 left(COALESCE(co.owner_name, '${name}'), 70), pi.id::text, pi.updated_at
+          FROM payment_items pi
+          LEFT JOIN LATERAL (SELECT c.owner_name FROM vw_all_contracts c WHERE c.id = pi.contract_id LIMIT 1) co ON true
+          WHERE pi.${c.sent} IS TRUE AND pi.${c.sum} > 0 AND pi.id % 50 <> 0`);
+      } else {
+        await run(`INSERT INTO uzasbo_send (obl_id, date_from, date_to, receiver_type, receiver_sum, receiver_name,
+                                            payment_items_id, created_at)
+          SELECT COALESCE(pi.obl_id, 0), date_trunc('month', pi.doc_date)::date,
+                 (date_trunc('month', pi.doc_date) + interval '1 month - 1 day')::date, ${c.rt}, sum(pi.${c.sum}),
+                 left(COALESCE(max(l.name2), 'Respublika') || ' - ${name}', 70),
+                 string_agg(pi.id::text, ', ' ORDER BY pi.id), max(pi.updated_at)
+          FROM payment_items pi LEFT JOIN lists l ON l.id = pi.obl_id AND l.type_id = 1
+          WHERE pi.${c.sent} IS TRUE AND pi.${c.sum} > 0 AND pi.id % 50 <> 0
+          GROUP BY COALESCE(pi.obl_id, 0), date_trunc('month', pi.doc_date)`);
+      }
+    }
+    // Ataylab TO'PLANGAN ro'yxat (serverdagidek): Namangan QQS topshiriqnomalari oldingilarning
+    // qismlarini ham qayta sanaydi, summasi esa faqat o'ziniki — bu ikki marta to'lash EMAS.
+    await run(`UPDATE uzasbo_send u SET payment_items_id = c.list FROM (
+        SELECT a.id, string_agg(b.payment_items_id, ', ' ORDER BY b.id) AS list
+        FROM uzasbo_send a JOIN uzasbo_send b ON b.receiver_type = a.receiver_type AND b.obl_id = a.obl_id AND b.id <= a.id
+        WHERE a.receiver_type = 1 AND a.obl_id = 14 GROUP BY a.id) c
+      WHERE c.id = u.id`);
+    // Holatlar: ~86% to'langan (SENT, 4), ~2% yuborilgan-xato (42), ~6% yaratilgan, ~6% rad etilgan.
+    await run(`UPDATE uzasbo_send u SET
+        status = (CASE WHEN x.r < 0.88 THEN 'SENT' WHEN x.r < 0.94 THEN 'CREATED' ELSE 'REJECTED' END)::uzasbo_send_status,
+        uzasbo_status = CASE WHEN x.r < 0.86 THEN 4 WHEN x.r < 0.88 THEN 42 WHEN x.r < 0.94 THEN NULL ELSE 12 END,
+        uzasbo_reason = CASE WHEN x.r < 0.86 THEN '000-' WHEN x.r < 0.88 THEN 'BAD FILE' WHEN x.r < 0.94 THEN NULL
+                             ELSE '187 - Счет Получателя или клиент в счете Получателя отсутствует в НИББД' END,
+        uzasbo_treas_oper_date = CASE WHEN x.r < 0.86 THEN u.date_to + 1 + (x.r * 100)::int % 7 END,
+        uzasbo_num = CASE WHEN x.r < 0.88 THEN (u.id % 900 + 1)::int END
+      FROM (SELECT id, random() AS r FROM uzasbo_send) x WHERE x.id = u.id`);
+    // Rad etilganlarning yarmi qayta yaratilib to'langan — bu IKKI MARTA to'lash EMAS.
+    await run(`INSERT INTO uzasbo_send (obl_id, area_id, date_from, date_to, receiver_type, receiver_sum, receiver_name,
+                                        payment_items_id, status, uzasbo_status, uzasbo_reason, uzasbo_treas_oper_date,
+                                        uzasbo_num, created_at, recreated)
+      SELECT obl_id, area_id, date_from, date_to, receiver_type, receiver_sum, receiver_name, payment_items_id,
+             'SENT', 4, '000-', date_to + 10, (id % 900 + 1)::int, created_at + interval '3 days', id
+      FROM uzasbo_send WHERE status = 'REJECTED' AND id % 2 = 0`);
+    // Ataylab IKKI MARTA to'langan BS topshiriqnomalari (sahifada "N marta to'langan"); ikkita mahalliy
+    // budjet nusxasi esa birlashtirilgan tur — "takroriy ro'yxat" bo'lib yashirilishi kerak.
+    await run(`INSERT INTO uzasbo_send (obl_id, area_id, date_from, date_to, receiver_type, receiver_sum, receiver_name,
+                                        payment_items_id, status, uzasbo_status, uzasbo_reason, uzasbo_treas_oper_date,
+                                        uzasbo_num, created_at)
+      SELECT obl_id, area_id, date_from, date_to, receiver_type, receiver_sum, receiver_name, payment_items_id,
+             'SENT', 4, '000-', uzasbo_treas_oper_date + 30, uzasbo_num, created_at + interval '30 days'
+      FROM uzasbo_send
+      WHERE status = 'SENT' AND uzasbo_status = 4 AND recreated IS NULL
+        AND ((receiver_type = 4 AND id % 173 = 0)
+             OR id IN (SELECT id FROM uzasbo_send WHERE receiver_type = 2 AND status = 'SENT' AND uzasbo_status = 4 ORDER BY id LIMIT 2))`);
+    await run(`UPDATE uzasbo_send SET state = 0, status = 'DELETED' WHERE status = 'CREATED' AND id % 10 = 0`);
+    // ⚠️ String.raw — `\s` oddiy shablonda yo'qolardi. Ifoda serverdagi indeks bilan bir xil.
+    await run(String.raw`CREATE INDEX idx_uzasbo_send_items_gin ON uzasbo_send USING gin
+      (string_to_array(regexp_replace(payment_items_id::text, '\s+'::text, ''::text, 'g'::text), ','::text))`);
+
     await run("ANALYZE payment_items");
     await run("ANALYZE lists");
     await run("ANALYZE vw_all_contracts");
+    await run("ANALYZE paydocs");
+    await run("ANALYZE uzasbo_send");
 
-    const [c] = await p.$queryRawUnsafe<{ n: bigint; active: bigint }[]>(
-      "SELECT count(*) AS n, count(*) FILTER (WHERE state = 1) AS active FROM payment_items",
+    const [c] = await p.$queryRawUnsafe<{ n: bigint; active: bigint; docs: bigint; sends: bigint }[]>(
+      `SELECT (SELECT count(*) FROM payment_items) AS n, (SELECT count(*) FROM payment_items WHERE state = 1) AS active,
+              (SELECT count(*) FROM paydocs) AS docs, (SELECT count(*) FROM uzasbo_send) AS sends`,
     );
-    console.log(`soxta baza tayyor: ${c.n} ta yozuv (faol ${c.active}), ${dbName}`);
+    console.log(`soxta baza tayyor: ${c.n} ta yozuv (faol ${c.active}), ${c.docs} hujjat, ${c.sends} topshiriqnoma — ${dbName}`);
   } finally {
     await p.$disconnect();
   }

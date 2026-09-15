@@ -19,6 +19,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   LOGIN_FAILED: "Kirish xatosi",
   LOGIN_BLOCKED: "Kirish bloklandi (ko'p urinish)",
   EXPORT: "Excel eksport",
+  EXPORT_TAQSIMOT: "Taqsimot Excel",
   REFRESH_CACHE: "Ma'lumotni yangiladi",
   CREATE_USER: "Foydalanuvchi qo'shdi",
   RESET_PASSWORD: "Parolni tikladi",

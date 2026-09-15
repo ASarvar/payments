@@ -1,3 +1,5 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { Banknote, CalendarDays, CheckCircle2, FileDown, Hourglass } from "lucide-react";
 import { requireUserOrRedirect } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
@@ -53,6 +55,10 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
   }
   const total = rows ? totalBir(rows) : null;
   const period = `${from ? dmy(from) : "boshidan"} — ${dmy(to)}`;
+  // Pastki bosqichlarga havolalar — `dan` HAR DOIM beriladi (standart sana jimgina qo'shilmasin).
+  const q = { dan: from ?? "", gacha: to };
+  const hududHref = (obl: number) => href(`${PATH}/hudud`, { hudud: obl, ...q });
+  const docsHref = (obl: number, extra: Record<string, string> = {}) => href(`${PATH}/hujjatlar`, { hudud: obl, ...q, ...extra });
 
   return (
     <div>
@@ -100,10 +106,10 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
 
           <Card
             title="Hududlar bo'yicha"
-            subtitle={`Summalar mln so'mda · «Bir kunda» — ${dmy(to)}`}
+            subtitle={`Summalar mln so'mda · «Bir kunda» — ${dmy(to)} · hudud nomini bosing — davrlar kesimi, raqamni bosing — hujjatlar`}
             right={
               <a
-                href={withBase(href("/api/taqsimot/biriktirish", { dan: from ?? "", gacha: to }))}
+                href={withBase(href("/api/taqsimot/biriktirish", q))}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-slate-600 transition hover:bg-muted"
               >
                 <FileDown className="h-4 w-4" />
@@ -155,8 +161,27 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
                   </tr>
                   {rows.map((r) => (
                     <tr key={r.id ?? "null"} className="border-b border-border last:border-0">
-                      <td className={`${td} whitespace-nowrap font-medium`}>{r.name}</td>
-                      <BirCells r={r} />
+                      <td className={`${td} whitespace-nowrap font-medium`}>
+                        {r.id !== null ? (
+                          <Link href={hududHref(r.id)} className="hover:underline" style={{ color: "var(--cobalt)" }}>
+                            {r.name}
+                          </Link>
+                        ) : (
+                          r.name
+                        )}
+                      </td>
+                      <BirCells
+                        r={r}
+                        links={
+                          r.id !== null
+                            ? {
+                                tushum: docsHref(r.id),
+                                farq: docsHref(r.id, { holat: "biriktirilmagan" }),
+                                day: href(`${PATH}/hujjatlar`, { hudud: r.id, dan: to, gacha: to }),
+                              }
+                            : undefined
+                        }
+                      />
                     </tr>
                   ))}
                 </tbody>
@@ -177,18 +202,30 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
   );
 }
 
-function BirCells({ r }: { r: BirRow }) {
+function BirCells({ r, links }: { r: BirRow; links?: { tushum: string; farq: string; day: string } }) {
+  const L = ({ to, children }: { to?: string; children: ReactNode }) =>
+    to ? (
+      <Link href={to} className="hover:underline">
+        {children}
+      </Link>
+    ) : (
+      <>{children}</>
+    );
   return (
     <>
-      <td className={`${tdR} border-l border-border`}>{mln(r.day.tushum)}</td>
+      <td className={`${tdR} border-l border-border`}>
+        <L to={links?.day}>{mln(r.day.tushum)}</L>
+      </td>
       <td className={tdR}>{mln(r.day.biriktirilgan)}</td>
       <td className={cn(tdR, !isZero(r.day.farq) && "text-red-700")}>{mln(r.day.farq)}</td>
-      <td className={`${tdR} border-l border-border font-semibold`}>{mln(r.tushum)}</td>
+      <td className={`${tdR} border-l border-border font-semibold`}>
+        <L to={links?.tushum}>{mln(r.tushum)}</L>
+      </td>
       <td
         className={cn(tdR, "font-semibold", !isZero(r.farq) && "text-red-700")}
         title={r.farq < 0 ? "Ortiqcha biriktirilgan" : undefined}
       >
-        {mln(r.farq)}
+        <L to={links?.farq}>{mln(r.farq)}</L>
       </td>
       <td className={`${tdR} font-semibold`}>{mln(r.biriktirilgan)}</td>
       {BIR_TYPES.map((t, i) => (

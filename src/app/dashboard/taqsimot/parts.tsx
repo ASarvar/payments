@@ -32,6 +32,26 @@ export function TaqsimotNav({ active }: { active: TaqsimotTab }) {
   );
 }
 
+/** Yo'l ko'rsatkichi: Respublika → hudud → hujjatlar. Oxirgisi — joriy sahifa (havolasiz). */
+export function Crumbs({ items }: { items: { label: string; href?: string }[] }) {
+  return (
+    <nav className="mb-3 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
+      {items.map((it, i) => (
+        <span key={i} className="flex items-center gap-1.5">
+          {i > 0 ? <span aria-hidden>›</span> : null}
+          {it.href ? (
+            <Link href={it.href} className="hover:underline" style={{ color: "var(--cobalt)" }}>
+              {it.label}
+            </Link>
+          ) : (
+            <span className="font-medium text-slate-700">{it.label}</span>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
 /** Sahifalash (ro'yxat sahifasidagi bilan bir xil ko'rinish). */
 export function Pager({
   page,

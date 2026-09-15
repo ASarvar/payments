@@ -51,6 +51,13 @@ export function nowTashkent(): string {
   return new Date().toLocaleString("sv-SE", { timeZone: "Asia/Tashkent" });
 }
 
+/** "YYYY-MM-DD" ± kun (kalendar bo'yicha, vaqt zonasiz). */
+export function shiftDate(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 /** Bugungi sana (Toshkent) "YYYY-MM-DD". */
 export function todayTashkent(): string {
   return nowTashkent().slice(0, 10);

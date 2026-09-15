@@ -3,6 +3,13 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.2 — 2026-09-15
+
+- **Biriktirish borishi — zina bo'yicha ochiladi** (eski tizimdagidek): respublika jadvalida hudud
+  nomi → hudud sahifasi (hisobot davri, joriy oy, kecha, bugun); qator yoki raqam → shu oraliqdagi
+  hujjatlar ro'yxati (sana, ID, to'lovchi, maqsadi, tushum, biriktirilmagan, biriktirilgan, turlar;
+  "biriktirilishi" va "turi" filtrlari); hujjat ID si → hujjat taqsimoti.
+
 ## 0.3.1 — 2026-09-15
 
 - **Biriktirish borishi** (Taqsimot ichida yangi yorliq). Mavjud tizimdagi "ijara to'lovlaridan

@@ -32,6 +32,7 @@ export function FilterBar({
   showQ,
   hidden,
   lockedRegion,
+  selects,
   children,
 }: {
   values: { dan?: string; gacha?: string; hudud?: string; tuman?: string; kanal?: string; holat?: string; q?: string };
@@ -43,6 +44,8 @@ export function FilterBar({
   showQ?: boolean;
   hidden?: Record<string, string>;
   lockedRegion?: Opt;
+  /** Qo'shimcha tanlovlar (masalan "turi") — holatdan keyin chiziladi. */
+  selects?: { name: string; label: string; value?: string; options: Opt[] }[];
   children?: React.ReactNode;
 }) {
   return (
@@ -74,6 +77,19 @@ export function FilterBar({
           </select>
         </label>
       ) : null}
+
+      {selects?.map((s) => (
+        <label key={s.name} className="flex flex-col gap-1">
+          <span className={labelCls}>{s.label}</span>
+          <select name={s.name} defaultValue={s.value ?? ""} className={`${inputCls} max-w-[240px]`}>
+            {s.options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
 
       <label className="flex flex-col gap-1">
         <span className={labelCls}>To&apos;lov sanasi</span>

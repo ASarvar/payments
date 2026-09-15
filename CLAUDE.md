@@ -115,6 +115,9 @@ Bitta to'lov hujjati pulining yo'li. Hozircha FAQAT adminlar (foydalanuvchi qaro
   Ataylab farqi: "bir kunda" = `gacha` kuni (aslida MUNIS `current_date`) va tushum = biriktirilgan +
   biriktirilmagan. `payments` da tuman YO'Q. `pay_type` 1..10 (`payment_items`, `munis`) — xuddi shu
   10 tur tartibida. `munis_receive_payment.status` — ENUM (NEW < UPDATED < DISTRIBUTED).
+  Zina (eski tizimdagidek): respublika → hudud (hisobot davri / joriy oy / kecha / bugun — `gacha` ga
+  nisbatan, qatorlar kesishadi, JAMI yo'q; `getBiriktirish(…, obl)`) → hujjatlar (`paydocs` + `payments`
+  va MUNIS `pay_id` orqali — hudud jadvali bilan faqat bog'lanish to'liq bo'lsa teng) → hujjat taqsimoti.
 - `payments_ro` ga `paydocs`, `uzasbo_send`, `payments`, `munis_receive_payment` uchun ham `GRANT SELECT`
   kerak (DEPLOY.md).
 

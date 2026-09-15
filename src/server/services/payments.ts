@@ -5,7 +5,8 @@ import { readOnly } from "@/lib/projectDb";
 import { CHANNELS, channelByKey, type Channel, type Holat } from "@/lib/channels";
 import { regionRank } from "@/lib/regions";
 import { isoDate, isoTs, str, toNum, type Row } from "@/server/services/sqlUtil";
-import { PAID_JOIN, paidBit, paidCte, paidListCte } from "@/server/services/uzasboSql";
+import { PAID_CACHE_SECONDS, PAID_JOIN, paidBit, paidCte, paidListCte } from "@/server/services/uzasboSql";
+import { nowTashkent } from "@/lib/format";
 import { getPaidItemSet } from "@/server/services/paidItems";
 
 /**
@@ -177,6 +178,8 @@ export function addMetrics(a: Metrics, b: Metrics): Metrics {
 }
 
 const cacheOpts = () => ({ revalidate: env.CACHE_SECONDS, tags: [PAYMENTS_CACHE_TAG] });
+/** `paid` CTE li (to'langanlikka bog'liq) og'ir hisoblar — `PAID_CACHE_SECONDS` (30 daqiqa). */
+const paidCacheOpts = () => ({ revalidate: PAID_CACHE_SECONDS, tags: [PAYMENTS_CACHE_TAG] });
 
 // ── Umumiy ko'rinish: 12 kanal matritsasi ────────────────────────────────────
 
@@ -184,6 +187,8 @@ export interface ChannelMatrix {
   total: Metric;
   /** Filtr doirasidagi eng so'nggi biriktirish vaqti (ma'lumot yangiligi). */
   lastCreated: string | null;
+  /** Qachon hisoblangan ("YYYY-MM-DD HH:mm:ss", Toshkent) — kesh 30 daqiqagacha. */
+  computedAt: string;
   channels: { key: string; label: string; m: Metrics }[];
 }
 
@@ -202,12 +207,13 @@ async function computeMatrix(f: PaymentFilters): Promise<ChannelMatrix> {
   return {
     total: { n: toNum(r.total_n), s: toNum(r.total_s) },
     lastCreated: isoTs(r.last_created),
+    computedAt: nowTashkent(),
     channels: CHANNELS.map((ch) => ({ key: ch.key, label: ch.label, m: readMetrics(r, `${ch.key}__`) })),
   };
 }
 
 export const getChannelMatrix = (f: PaymentFilters) =>
-  unstable_cache(computeMatrix, ["pay-matrix-v2"], cacheOpts())(f);
+  unstable_cache(computeMatrix, ["pay-matrix-v3"], paidCacheOpts())(f);
 
 // ── Nazorat paneli: hudud × 12 kanal (bitta skan) ───────────────────────────
 
@@ -225,12 +231,17 @@ export interface RegionMatrixRow {
   late: number;
 }
 
+export interface RegionMatrix {
+  rows: RegionMatrixRow[];
+  computedAt: string;
+}
+
 /**
  * Hududlar × 12 kanal × 8 ko'rsatkich — `paid` CTE bilan BITTA skan. Nazorat panelidagi svetofor
  * VA kanallar matritsasi shundan (butun respublika = qatorlar yig'indisi, hudud = o'sha qator) —
  * og'ir CTE hudud tanlanganda qayta hisoblanmaydi. Tuman filtri — `getChannelMatrix`.
  */
-async function computeRegionMatrix(from: string | undefined, to: string | undefined): Promise<RegionMatrixRow[]> {
+async function computeRegionMatrix(from: string | undefined, to: string | undefined): Promise<RegionMatrix> {
   const selects = CHANNELS.map((ch) => metricSelect(ch, `${ch.key}__`));
   const late = Prisma.join(
     CHANNELS.map((ch) => {
@@ -254,7 +265,7 @@ async function computeRegionMatrix(from: string | undefined, to: string | undefi
   );
   // Serverdagi tezlikni kuzatish uchun (`docker compose logs web`).
   console.log(`[nazorat] hudud × kanal (${from ?? "…"} — ${to ?? "…"}): ${Date.now() - t0} ms`);
-  return rows
+  const out = rows
     .map((r) => {
       const id = r.id === null || r.id === undefined ? null : Number(r.id);
       return {
@@ -267,13 +278,14 @@ async function computeRegionMatrix(from: string | undefined, to: string | undefi
       };
     })
     .sort((a, b) => regionRank(a.id) - regionRank(b.id));
+  return { rows: out, computedAt: nowTashkent() };
 }
 
 export const getRegionMatrix = (from: string | undefined, to: string | undefined) =>
-  unstable_cache(computeRegionMatrix, ["pay-region-matrix-v1"], cacheOpts())(from, to);
+  unstable_cache(computeRegionMatrix, ["pay-region-matrix-v2"], paidCacheOpts())(from, to);
 
 /** Hudud qatorlari (yoki bittasi) → kanallar matritsasi. */
-export function matrixOf(rows: RegionMatrixRow[]): ChannelMatrix {
+export function matrixOf(rows: RegionMatrixRow[], computedAt: string): ChannelMatrix {
   let lastCreated: string | null = null;
   const total: Metric = { n: 0, s: 0 };
   const byKey = new Map(CHANNELS.map((ch) => [ch.key, emptyMetrics()]));
@@ -286,6 +298,7 @@ export function matrixOf(rows: RegionMatrixRow[]): ChannelMatrix {
   return {
     total,
     lastCreated,
+    computedAt,
     channels: CHANNELS.map((ch) => ({ key: ch.key, label: ch.label, m: byKey.get(ch.key) ?? emptyMetrics() })),
   };
 }
@@ -319,7 +332,7 @@ function readGroup(r: Row, fallbackName: string): GroupRow {
   return { id, name: str(r.name) ?? fallbackName, m: readMetrics(r, ""), aging };
 }
 
-async function computeByRegion(key: string, f: PaymentFilters): Promise<GroupRow[]> {
+async function computeByRegion(key: string, f: PaymentFilters): Promise<{ rows: GroupRow[]; computedAt: string }> {
   const ch = mustChannel(key);
   const rows = await readOnly((tx) =>
     tx.$queryRaw<Row[]>(Prisma.sql`
@@ -330,13 +343,14 @@ async function computeByRegion(key: string, f: PaymentFilters): Promise<GroupRow
       WHERE ${whereSql([...filterConds(f), Prisma.sql`${col(ch.sum)} > 0`])}
       GROUP BY pi.obl_id`),
   );
-  return rows
-    .map((r) => readGroup(r, "Hudud ko'rsatilmagan"))
-    .sort((a, b) => regionRank(a.id) - regionRank(b.id));
+  return {
+    rows: rows.map((r) => readGroup(r, "Hudud ko'rsatilmagan")).sort((a, b) => regionRank(a.id) - regionRank(b.id)),
+    computedAt: nowTashkent(),
+  };
 }
 
 export const getByRegion = (key: string, f: PaymentFilters) =>
-  unstable_cache(computeByRegion, ["pay-region-v2"], cacheOpts())(key, f);
+  unstable_cache(computeByRegion, ["pay-region-v3"], paidCacheOpts())(key, f);
 
 async function computeByDistrict(key: string, f: PaymentFilters): Promise<GroupRow[]> {
   const ch = mustChannel(key);
@@ -353,7 +367,7 @@ async function computeByDistrict(key: string, f: PaymentFilters): Promise<GroupR
 }
 
 export const getByDistrict = (key: string, f: PaymentFilters) =>
-  unstable_cache(computeByDistrict, ["pay-district-v2"], cacheOpts())(key, f);
+  unstable_cache(computeByDistrict, ["pay-district-v2"], paidCacheOpts())(key, f);
 
 /**
  * O'tkazilmagan ulushlar ichidagi shartnoma muammolari.

@@ -181,6 +181,9 @@ app/api/shartnomalar        Excel: shartnomalar bo'yicha
 - ⚠️ Ustun nomlari SQL'ga faqat `CHANNELS` dan (`Prisma.raw`); qiymatlar doim parametr.
 - ⚠️ Jadvaldagi son = ro'yxatdagi son: havolalar `filterParams()` dan (dan HAR DOIM beriladi).
 - Kesh: `unstable_cache`, tag `payments`, `CACHE_SECONDS` (5 daq). "Yangilash" tugmasi tag'ni tashlaydi.
+  ⚠️ To'langanlikka bog'liq og'ir hisoblar (panel, kanal sahifalari, `paidItems`) — `PAID_CACHE_SECONDS`
+  (30 daq; serverda hudud × kanal 16 s — foydalanuvchi qarori, 2026-09-15); natijada `computedAt`, sahifada
+  "hisoblangan" vaqti. "Yangilash" `paidItems` xotira keshini ham tozalaydi.
 - Eksport: `EXPORT_MAX_ROWS` (300 000), kalit bo'yicha (`pi.id >`) bo'laklar, har eksport auditda.
 - ⚠️ Matn SERVERDA formatlanadi (`lib/format.ts`) — client'da `toLocaleString` gidratsiyani buzadi.
 

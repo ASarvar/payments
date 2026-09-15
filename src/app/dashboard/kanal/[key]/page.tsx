@@ -109,7 +109,8 @@ export default async function ChannelPage({
   if (regR.status === "rejected") console.error("[kanal]", regR.reason);
   if (issuesR.status === "rejected") console.error("[kanal:issues]", issuesR.reason);
 
-  const regions = regR.status === "fulfilled" ? regR.value : null;
+  const regions = regR.status === "fulfilled" ? regR.value.rows : null;
+  const computedAt = regR.status === "fulfilled" ? regR.value.computedAt : null;
   const issues: ContractIssues | null = issuesR.status === "fulfilled" ? issuesR.value : null;
   const districts = distR.status === "fulfilled" ? distR.value : null;
   const total = regions ? totalsOf(regions) : null;
@@ -136,6 +137,7 @@ export default async function ChannelPage({
               <> · barcha davr</>
             )}
             {!parsed.danExplicit ? <> (standart boshlanish sanasi — o&apos;zgartirish mumkin)</> : null}
+            {computedAt ? <> · hisoblangan: {dmy(computedAt, true)}</> : null}
           </>
         }
       />

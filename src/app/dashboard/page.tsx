@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUserOrRedirect } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, filterParams, href, type SP } from "@/lib/filters";
-import { env } from "@/lib/env";
+import { PAID_CACHE_SECONDS } from "@/server/services/uzasboSql";
 import {
   LATE_DAYS,
   addMetrics,
@@ -14,6 +14,7 @@ import {
   matrixOf,
   type ChannelMatrix,
   type Metrics,
+  type RegionMatrix,
   type RegionMatrixRow,
 } from "@/server/services/payments";
 import { getBiriktirish, getDoublePaid, getProblemSummary, totalBir, type BirAmounts, type BirRow } from "@/server/services/taqsimot";
@@ -75,7 +76,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const badDates = Boolean(f.from && f.from > to);
   const skip = <T,>() => Promise.resolve(null as T | null);
   const [rmR, tmR, birR, dynR, probR, dblR] = await Promise.allSettled([
-    badDates ? skip<RegionMatrixRow[]>() : getRegionMatrix(f.from, f.to),
+    badDates ? skip<RegionMatrix>() : getRegionMatrix(f.from, f.to),
     !badDates && f.area !== undefined ? getChannelMatrix(f) : skip<ChannelMatrix>(),
     badDates ? skip<BirRow[]>() : getBiriktirish(f.from, to),
     badDates ? skip<DayPoint[]>() : getDynamics(to, f.obl),
@@ -86,7 +87,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     if (r.status === "rejected") console.error(`[nazorat:${name}]`, r.reason);
   }
   const val = <T,>(r: PromiseSettledResult<T | null>): T | null => (r.status === "fulfilled" ? r.value : null);
-  const regionRows = val(rmR);
+  const rm = val(rmR);
+  const regionRows = rm?.rows ?? null;
   const birRows = val(birR);
   const dyn = val(dynR);
 
@@ -94,8 +96,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const matrix: ChannelMatrix | null =
     f.area !== undefined
       ? val(tmR)
-      : regionRows
-        ? matrixOf(f.obl !== undefined ? regionRows.filter((r) => r.id === f.obl) : regionRows)
+      : rm
+        ? matrixOf(f.obl !== undefined ? rm.rows.filter((r) => r.id === f.obl) : rm.rows, rm.computedAt)
         : null;
   const matrixError = f.area !== undefined ? tmR : rmR;
   const totals = matrix ? matrix.channels.reduce((acc, c) => addMetrics(acc, c.m), emptyMetrics()) : null;
@@ -185,8 +187,12 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             {scope} · to&apos;lov sanasi {period}
             {!danExplicit ? <> (standart boshlanish sanasi)</> : null}
             {matrix?.lastCreated ? <> · oxirgi biriktirish: {dmy(matrix.lastCreated, true)}</> : null}
-            {" · "}
-            {Math.round(env.CACHE_SECONDS / 60)} daqiqagacha keshlanadi
+            {matrix ? (
+              <>
+                {" · "}hisoblangan: {dmy(matrix.computedAt, true)} ({Math.round(PAID_CACHE_SECONDS / 60)} daqiqada yangilanadi,
+                «Yangilash» — darhol)
+              </>
+            ) : null}
           </>
         }
       />

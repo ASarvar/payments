@@ -1,5 +1,13 @@
 import { Prisma } from "@prisma/client";
+import { env } from "@/lib/env";
 import { PAID_UZASBO_STATUS } from "@/lib/uzasbo";
+
+/**
+ * To'langanlikka bog'liq OG'IR hisoblar kesh muddati (panel, kanal sahifalari, to'langan qismlar
+ * to'plami). Serverda hudud × kanal 16 s (2026-09-15) — foydalanuvchi qarori: 30 daqiqa. Eskirgan
+ * natija darhol beriladi, yangisi fonda; "Yangilash" — darhol. `CACHE_SECONDS` dan kam bo'lmaydi.
+ */
+export const PAID_CACHE_SECONDS = Math.max(env.CACHE_SECONDS, 1800);
 
 /**
  * `uzasbo_send` (g'aznachilikka topshiriqnomalar) bo'yicha SQL bo'laklari — to'lovlar va taqsimot

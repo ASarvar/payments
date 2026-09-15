@@ -3,6 +3,15 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.5 — 2026-09-16
+
+- **Og'ir hisoblar 30 daqiqada bir marta** (Nazorat paneli, kanal sahifalari, to'langan qismlar): serverda
+  bitta hisob ~16 soniya — boshqa tizim bazasiga yuk kamayadi. Eskirgan natija darhol ko'rsatiladi, yangisi
+  fonda hisoblanadi; sahifada "hisoblangan" vaqti yoziladi; "Yangilash" tugmasi — darhol.
+- **Biriktirish — hujjatlar ro'yxati:** qator bosilsa, ostida shu hujjatning kanallar bo'yicha taqsimoti
+  ochiladi (ulush, tasdiqlangan, topshiriqnomaga kiritilgan, g'aznachilikda to'langan, to'lanmagan, oxirgi
+  to'lov). Qayta bosilsa yopiladi; ID — to'liq taqsimot sahifasi.
+
 ## 0.3.4 — 2026-09-15
 
 - **Nazorat paneli** — bosh sahifa ("Umumiy ko'rinish" o'rniga). Bir sahifada:

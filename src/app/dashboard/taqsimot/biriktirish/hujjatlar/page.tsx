@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { requireUserOrRedirect } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, href, one, type SP } from "@/lib/filters";
@@ -8,19 +9,22 @@ import {
   BIR_TYPES,
   getBirDocPage,
   getBirDocSummary,
+  getDistribution,
   isBirDocHolat,
   isBirType,
   type BirDoc,
   type BirDocHolat,
   type BirDocSel,
   type BirDocSummary,
+  type Distribution,
 } from "@/server/services/taqsimot";
 import { dmy, nf, sum, todayTashkent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { FilterBar } from "@/components/FilterBar";
 import { ExcelLink } from "@/components/ExcelLink";
+import { ClickableRow } from "@/components/ClickableRow";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, totalStyle } from "@/components/ui";
-import { Crumbs, Pager, TaqsimotNav } from "../../parts";
+import { ChannelsSubtitle, ChannelsTable, Crumbs, Pager, TaqsimotNav } from "../../parts";
 
 const BASE = "/dashboard/taqsimot/biriktirish";
 
@@ -86,6 +90,20 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
     }
   }
 
+  // Qator bosilganda (`ochiq`) — shu hujjatning kanallar bo'yicha taqsimoti qator ostida (faqat joriy sahifadagisi).
+  const ochiqRaw = one(sp.ochiq);
+  const ochiq = ochiqRaw && /^\d{1,18}$/.test(ochiqRaw) && docs.some((d) => d.id === ochiqRaw) ? ochiqRaw : undefined;
+  let openDist: Distribution | null = null;
+  let openError: string | null = null;
+  if (ochiq) {
+    try {
+      openDist = await getDistribution(ochiq);
+    } catch (e) {
+      console.error("[taqsimot:biriktirish:hujjatlar:ochiq]", e);
+      openError = projectErrorMessage(e);
+    }
+  }
+
   const base = { hudud: region.id, dan: from ?? "", gacha: to, holat: holat === "hammasi" ? undefined : holat, tur };
   const pageHref = (x: number) => href(`${BASE}/hujjatlar`, { ...base, p: x > 1 ? x : undefined });
   const period = `${from ? dmy(from) : "boshidan"} — ${dmy(to)}`;
@@ -135,7 +153,7 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
               <>
                 Tushum <strong>{sum(summary.tushum)}</strong> · biriktirilgan {sum(summary.biriktirilgan)} · biriktirilmagan{" "}
                 <span className={cn(Math.abs(summary.farq) >= 0.5 && "font-semibold text-red-700")}>{sum(summary.farq)}</span>{" "}
-                so&apos;m · ID ni bosing — hujjat taqsimoti
+                so&apos;m · qatorni bosing — kanallar bo&apos;yicha taqsimot, ID ni bosing — to&apos;liq sahifa
               </>
             }
           >
@@ -203,9 +221,23 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
                       </td>
                     </tr>
                   ) : (
-                    docs.map((d, i) => (
-                      <tr key={d.id} className="border-b border-border last:border-0">
-                        <td className={`${tdR} text-muted-foreground`}>{nf((p - 1) * PAGE_SIZE + i + 1)}</td>
+                    docs.map((d, i) => {
+                      const open = d.id === ochiq;
+                      const toggle = href(`${BASE}/hujjatlar`, { ...base, p: p > 1 ? p : undefined, ochiq: open ? undefined : d.id });
+                      return (
+                      <Fragment key={d.id}>
+                      <ClickableRow href={toggle} expanded={open} className={cn("border-b border-border last:border-0", open && "bg-muted/40")}>
+                        <td className={`${tdR} text-muted-foreground`}>
+                          <Link
+                            href={toggle}
+                            scroll={false}
+                            className="inline-flex items-center gap-1 hover:underline"
+                            title={open ? "Yopish" : "Kanallar bo'yicha taqsimot"}
+                          >
+                            <span aria-hidden className="text-[10px]">{open ? "▼" : "▶"}</span>
+                            {nf((p - 1) * PAGE_SIZE + i + 1)}
+                          </Link>
+                        </td>
                         <td className={`${td} whitespace-nowrap tabular-nums`}>{dmy(d.docDate)}</td>
                         <td className={`${td} tabular-nums`}>
                           <Link href={href("/dashboard/taqsimot", { id: d.id })} className="font-medium hover:underline" style={{ color: "var(--cobalt)" }}>
@@ -235,8 +267,39 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
                           </td>
                         ))}
                         <td className={cn(tdR, !d.munis && "text-slate-300")}>{sum(d.munis)}</td>
-                      </tr>
-                    ))
+                      </ClickableRow>
+                      {open ? (
+                        <tr className="border-b border-border bg-muted/20">
+                          <td colSpan={9 + BIR_TYPES.length} className="p-0">
+                            {/* sticky — keng jadval yon tomonga surilganda ham panel ko'rinib turadi */}
+                            <div className="sticky left-0 max-w-[calc(100vw-3rem)] p-3 md:max-w-[calc(100vw-20rem)]">
+                              <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+                                  <div>
+                                    <p className="text-[13px] font-semibold" style={{ color: "var(--navy)" }}>
+                                      Kanallar bo&apos;yicha — hujjat #{d.id}
+                                    </p>
+                                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                                      {openDist ? <ChannelsSubtitle d={openDist} /> : (openError ?? "Hujjat topilmadi.")}
+                                    </p>
+                                  </div>
+                                  <Link
+                                    href={href("/dashboard/taqsimot", { id: d.id })}
+                                    className="text-[12.5px] font-medium hover:underline"
+                                    style={{ color: "var(--cobalt)" }}
+                                  >
+                                    To&apos;liq taqsimot (qismlar, topshiriqnomalar) →
+                                  </Link>
+                                </div>
+                                {openDist ? <ChannelsTable d={openDist} /> : null}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                      </Fragment>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

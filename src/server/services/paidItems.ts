@@ -1,11 +1,10 @@
 import { Prisma } from "@prisma/client";
-import { env } from "@/lib/env";
 import { readOnly } from "@/lib/projectDb";
-import { ITEMS_PARSED, PAID } from "@/server/services/uzasboSql";
+import { ITEMS_PARSED, PAID, PAID_CACHE_SECONDS } from "@/server/services/uzasboSql";
 
 /**
  * Kanal (`rt`) bo'yicha g'aznachilik TO'LAGAN qismlar to'plami — ro'yxat sahifasi va eksport uchun
- * (qator holati, "to'langan"/"topshiriqnomada" filtri). XOTIRADA keshlanadi (`CACHE_SECONDS`).
+ * (qator holati, "to'langan"/"topshiriqnomada" filtri). XOTIRADA keshlanadi (`PAID_CACHE_SECONDS`).
  *
  * ⚠️ Nega qatorga GIN tekshiruvi (`@> ARRAY[pi.id]`) EMAS: serverda (2026-09-15) Postgres unga GIN'ni
  * tanlamadi — qiymat so'rov paytida ma'lum bo'lmagani uchun `recreated` indeksi bo'ylab 198 ming
@@ -47,7 +46,7 @@ function load(rt: number): Promise<Set<string>> {
 export async function getPaidItemSet(rt: number): Promise<Set<string>> {
   const hit = cache.get(rt);
   if (hit) {
-    if (Date.now() - hit.at >= env.CACHE_SECONDS * 1000) load(rt).catch((e) => console.error("[to'langan] fonda yangilash:", e));
+    if (Date.now() - hit.at >= PAID_CACHE_SECONDS * 1000) load(rt).catch((e) => console.error("[to'langan] fonda yangilash:", e));
     return hit.set;
   }
   return load(rt);

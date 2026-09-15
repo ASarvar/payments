@@ -3,6 +3,24 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.4 — 2026-09-15
+
+- **Nazorat paneli** — bosh sahifa ("Umumiy ko'rinish" o'rniga). Bir sahifada:
+  - **pul yo'li** — 6 bosqich: tushum → biriktirildi → 12 kanalga taqsimlandi → tasdiqlandi →
+    topshiriqnomaga kiritildi → g'aznachilik to'ladi. Har bosqichda summa, foiz va qancha turib
+    qolgani; bosilsa o'sha ro'yxat ochiladi;
+  - **diqqat kartalari** — tasdiqlanmasdan o'tkazilgan ulushlar, muammoli hujjatlar, ikki marta
+    to'langanlar;
+  - **hududlar svetofori** — biriktirilgan va to'langan ulushi, 30 kundan ortiq to'lanmagani; rangli,
+    eng orqada qolgan hudud tepada;
+  - **kunlik dinamika** — oxirgi 30 kun: tushum, biriktirilgan va g'aznachilik to'lagan summa;
+    grafik va jadval;
+  - **kanallar matritsasi**.
+- **"O'tkazilgan" ikkiga bo'lindi**: **To'langan** (g'aznachilik ijro etgan) va **Topshiriqnomada**
+  (kiritilgan, hali to'lanmagan). O'zgarish panel, kanal sahifalari, ro'yxatdagi holat filtri va
+  Excel'dagi holat ustuniga taalluqli. "O'tkazilmagan" va "tasdiqlanmagan" ta'rifi o'zgarmadi.
+- Serverda yangi huquq yoki migratsiya kerak emas.
+
 ## 0.3.3 — 2026-09-15
 
 - **Shartnomalar bo'yicha** (yangi menyu, hozircha faqat adminlar). Mavjud tizimdagi "yilda

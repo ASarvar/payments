@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Sigma, CheckCircle2, Hourglass, CircleDashed } from "lucide-react";
+import { Sigma, CheckCircle2, Hourglass, CircleDashed, Send } from "lucide-react";
 import { requireUserOrRedirect } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { CHANNELS, channelByKey } from "@/lib/channels";
@@ -19,6 +19,7 @@ import {
 import { dmy, money, nf, pct1, sum } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { KpiCard } from "@/components/KpiCard";
+import { IssueTile } from "@/components/IssueTile";
 import { FilterBar } from "@/components/FilterBar";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, totalStyle } from "@/components/ui";
 
@@ -44,8 +45,13 @@ function MetricCells({ r, list }: { r: GroupRow; list: ((holat: string) => strin
   return (
     <>
       <td className={tdR}>{sum(r.m.jami.s)}</td>
-      <td className={tdR}>{sum(r.m.otkazilgan.s)}</td>
-      <td className={tdR}>{pct1(r.m.otkazilgan.s, r.m.jami.s)}</td>
+      <td className={tdR}>
+        <L h="tolangan">{sum(r.m.tolangan.s)}</L>
+      </td>
+      <td className={tdR}>{pct1(r.m.tolangan.s, r.m.jami.s)}</td>
+      <td className={tdR}>
+        <L h="topshiriqnomada">{sum(r.m.topshiriqnomada.s)}</L>
+      </td>
       <td className={tdR}>
         <L h="otkazilmagan">{nf(r.m.otkazilmagan.n)}</L>
       </td>
@@ -156,14 +162,23 @@ export default async function ChannelPage({
 
       {regions && total ? (
         <>
-          <div className="mb-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <KpiCard label="Hisoblangan" {...money(total.m.jami.s)} footer={`${nf(total.m.jami.n)} ta ulush`} accent="#1a3a7c" icon={Sigma} />
             <KpiCard
-              label="O'tkazilgan"
-              {...money(total.m.otkazilgan.s)}
-              footer={`${pct1(total.m.otkazilgan.s, total.m.jami.s)} · ${nf(total.m.otkazilgan.n)} ta`}
+              label="To'langan"
+              {...money(total.m.tolangan.s)}
+              footer={`${pct1(total.m.tolangan.s, total.m.jami.s)} · ${nf(total.m.tolangan.n)} ta · g'aznachilik ijro etgan`}
               accent="#15803d"
               icon={CheckCircle2}
+              href={listHref()("tolangan")}
+            />
+            <KpiCard
+              label="Topshiriqnomada (to'lanmagan)"
+              {...money(total.m.topshiriqnomada.s)}
+              footer={`${nf(total.m.topshiriqnomada.n)} ta · kiritilgan, hali to'lanmagan`}
+              accent="#0369a1"
+              icon={Send}
+              href={listHref()("topshiriqnomada")}
             />
             <KpiCard
               label="O'tkazilmagan (tasdiqlangan)"
@@ -213,8 +228,9 @@ export default async function ChannelPage({
                   <tr className="border-b border-border bg-muted/50">
                     <th className={th}>Hudud</th>
                     <th className={thR}>Hisoblangan</th>
-                    <th className={thR}>O&apos;tkazilgan</th>
+                    <th className={thR}>To&apos;langan</th>
                     <th className={thR}>Ulushi</th>
+                    <th className={thR}>Topshiriqnomada</th>
                     <th className={thR}>O&apos;tkazilmagan, soni</th>
                     <th className={thR}>O&apos;tkazilmagan, summa</th>
                     <th className={thR}>Tasdiqlanmagan</th>
@@ -324,41 +340,5 @@ function RegionRows({
           ))
         : null}
     </>
-  );
-}
-
-function IssueTile({
-  title,
-  n,
-  s,
-  href: to,
-  failed,
-}: {
-  title: string;
-  n?: number;
-  s?: number;
-  href: string;
-  failed?: string;
-}) {
-  const bad = (n ?? 0) > 0;
-  return (
-    <Link
-      href={to}
-      className={cn(
-        "block rounded-xl border p-3 transition hover:shadow-sm",
-        bad ? "border-red-200 bg-red-50/60 hover:border-red-300" : "border-border bg-card hover:bg-muted/40",
-      )}
-    >
-      <p className="text-[11.5px] font-medium text-muted-foreground">{title}</p>
-      {failed ? (
-        <p className="mt-1 text-[12px] text-amber-800">{failed}</p>
-      ) : n === undefined ? (
-        <p className="mt-1 text-[12px] text-muted-foreground">hisoblanmoqda…</p>
-      ) : (
-        <p className={cn("mt-1 text-lg font-bold", bad ? "text-red-700" : "text-slate-700")}>
-          {nf(n)} ta <span className="text-[12px] font-medium text-muted-foreground">· {sum(s ?? 0)} so&apos;m</span>
-        </p>
-      )}
-    </Link>
   );
 }

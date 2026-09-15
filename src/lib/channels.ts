@@ -59,10 +59,14 @@ export function channelByRt(rt: number): Channel | undefined {
 }
 
 /**
- * Ulush HOLATLARI. Birinchi to'rttasi (`otkazilgan` / `otkazilmagan` /
- * `tasdiqlanmagan`) bitta kanal ichida qatorlarni TO'LIQ va kesishmasdan bo'ladi:
- * jami = o'tkazilgan + o'tkazilmagan + tasdiqlanmagan.
+ * Ulush HOLATLARI. `tolangan` / `topshiriqnomada` / `otkazilmagan` / `tasdiqlanmagan` bitta kanal
+ * ichida qatorlarni TO'LIQ va kesishmasdan bo'ladi:
+ * jami = to'langan + topshiriqnomada + o'tkazilmagan + tasdiqlanmagan.
  *
+ * ⚠️ "O'tkazilgan" (`sent_*` belgisi) — topshiriqnomaga KIRITILGAN, g'aznachilik to'lagani emas.
+ * 2026-09-15 dan ikkiga bo'lingan (foydalanuvchi qarori): "To'langan" (g'aznachilik ijro etgan,
+ * `lib/uzasbo.ts`) va "Topshiriqnomada" (kiritilgan, hali to'lanmagan). `otkazilgan` — ikkalasi
+ * birga (eski havolalar uchun ham).
  * ⚠️ "O'tkazilmagan" = tasdiqlangan VA `sent IS NOT TRUE` — `false` va `NULL`
  * orasida farq YO'Q (foydalanuvchi qarori, 2026-09-11). Foydalanuvchining QQS
  * hisoboti aynan shu shart bilan yozilgan.
@@ -74,8 +78,10 @@ export function channelByRt(rt: number): Channel | undefined {
 export const HOLATLAR = [
   { key: "jami", label: "Hammasi" },
   { key: "otkazilmagan", label: "O'tkazilmagan" },
-  { key: "otkazilgan", label: "O'tkazilgan" },
+  { key: "topshiriqnomada", label: "Topshiriqnomada (to'lanmagan)" },
+  { key: "tolangan", label: "To'langan" },
   { key: "tasdiqlanmagan", label: "Tasdiqlanmagan" },
+  { key: "otkazilgan", label: "Topshiriqnomaga kiritilgan (jami)" },
   { key: "anomaliya", label: "Tasdiqlanmasdan o'tkazilgan" },
   { key: "shartnomasiz", label: "O'tkazilmagan — faol shartnomasiz" },
   { key: "rekvizitsiz", label: "O'tkazilmagan — BS rekvizitisiz" },

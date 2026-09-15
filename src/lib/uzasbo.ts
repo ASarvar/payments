@@ -6,7 +6,8 @@
  * 177 487 ta, ~730 mlrd). Boshqa kodlar (1, 3, 5, 12, 42 "BAD FILE", 43 "K00-…") — jarayonda
  * yoki xato; ularning rasmiy ma'nosi tasdiqlanmagan, shuning uchun kodning o'zi ko'rsatiladi.
  * ⚠️ `payment_items.sent_*` — topshiriqnomaga KIRITILGAN belgisi (CREATED holatida ham true),
- * g'aznachilik to'lagani EMAS. Ilovadagi "O'tkazilgan" hozircha shu belgiga tayanadi.
+ * g'aznachilik to'lagani EMAS. Ilovada "o'tkazilgan" = "to'langan" + "topshiriqnomada" (2026-09-15;
+ * SQL — `server/services/uzasboSql.ts`).
  */
 
 export const PAID_UZASBO_STATUS = 4;

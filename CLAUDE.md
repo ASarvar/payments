@@ -57,15 +57,26 @@ u **12 ta oluvchiga** taqsimlanadi. Kanallar — `lib/channels.ts` (yagona joy):
 ### Holatlar (bitta kanal ichida KESISHMAYDI)
 
 ```
-jami           = S > 0
-o'tkazilgan    = S > 0 AND sent IS TRUE
-o'tkazilmagan  = S > 0 AND accept IS TRUE AND sent IS NOT TRUE     ← asosiy savol
-tasdiqlanmagan = S > 0 AND accept IS NOT TRUE AND sent IS NOT TRUE
-anomaliya      = S > 0 AND sent IS TRUE AND accept IS NOT TRUE     (o'tkazilgan ichida)
+jami            = S > 0
+to'langan       = S > 0 AND sent IS TRUE AND P                         (P — g'aznachilik to'lagan)
+topshiriqnomada = S > 0 AND sent IS TRUE AND NOT P
+o'tkazilmagan   = S > 0 AND accept IS TRUE AND sent IS NOT TRUE     ← asosiy savol
+tasdiqlanmagan  = S > 0 AND accept IS NOT TRUE AND sent IS NOT TRUE
+o'tkazilgan     = to'langan + topshiriqnomada (sent IS TRUE)
+anomaliya       = S > 0 AND sent IS TRUE AND accept IS NOT TRUE     (o'tkazilgan ichida)
 ```
 
-jami = o'tkazilgan + o'tkazilmagan + tasdiqlanmagan. ⚠️ `sent = false` va `NULL` orasida
-farq YO'Q (foydalanuvchi qarori) — `IS NOT TRUE`, `= false` emas.
+jami = to'langan + topshiriqnomada + o'tkazilmagan + tasdiqlanmagan. ⚠️ `sent = false` va `NULL`
+orasida farq YO'Q (foydalanuvchi qarori) — `IS NOT TRUE`, `= false` emas.
+⚠️ "O'tkazilgan" ikkiga bo'lingan (foydalanuvchi qarori, 2026-09-15). P — qism shu kanalning to'langan
+topshiriqnomasi ro'yxatida bor (`server/services/uzasboSql.ts`): agregatlarda `paid` CTE (to'langan
+ro'yxatlar yoyilib, qism → `1 << receiver_type` bit-maskasi, `PAID_JOIN` + `paidBit(rt)`); ro'yxat sahifasi va
+eksportda — `server/services/paidItems.ts` (kanalning to'langan qismlari to'plami, XOTIRADA keshlanadi; filtrga
+`paidListCte`, qator holatiga `Set`). ⚠️ Serverda (2026-09-15): to'langan ro'yxatlarda 6,45 mln id, CTE + skan
+7,6 s — faqat keshlangan hisobotlarda, bitta kanal bo'lsa `paidCte([rt])`. Yoyishda `ITEMS_PARSED` (`translate`),
+GIN qidiruvida — faqat `ITEMS_ARR`. ⚠️ Qatorga GIN tekshiruvi (`@> ARRAY[pi.id]`) ISHLATMANG: Postgres unga
+GIN'ni tanlamadi (1,6 s/qator). Belgisiz, lekin to'langan ulush o'tkazilmagan/tasdiqlanmaganda qoladi (QQS
+SQL mosligi uchun; serverda QQS'da 127 ta).
 
 ### Shartnoma — `EXISTS`, JOIN EMAS
 
@@ -97,8 +108,8 @@ Bitta to'lov hujjati pulining yo'li. Hozircha FAQAT adminlar (foydalanuvchi qaro
   bir davr, KO'P qism — `payment_items_id` vergulli MATN. ⚠️ Qidiruv faqat GIN indeks ifodasi bilan
   (`ITEMS_ARR`, `String.raw` bilan — `\s` yo'qolmasin). ⚠️ `status` — ENUM: xom so'rovda `::text` SHART.
 - ⚠️ TO'LANGAN = `status = 'SENT' AND uzasbo_status = 4` (`lib/uzasbo.ts`). `sent_*` — topshiriqnomaga
-  KIRITILGAN belgisi (CREATED'da ham true), to'langan emas. Ilovadagi "O'tkazilgan" hozircha `sent_*` ga
-  tayanadi — ikkiga bo'lish taklif qilingan, qaror yo'q.
+  KIRITILGAN belgisi (CREATED'da ham true), to'langan emas. Ilovada "o'tkazilgan" = to'langan +
+  topshiriqnomada (yuqoridagi "Holatlar").
 - ⚠️ `payment_items_id` HAR DOIM "to'langan qismlar" EMAS: birlashtirilgan turlarda ro'yxat ko'pincha DAVR
   BOSHIDAN TO'PLANADI (`date_from` qotib, `date_to` o'sadi; summa — faqat yangi qismlar). Bitta QQS qismi 531
   ta to'langan topshiriqnomada uchraydi. Shuning uchun (qism, kanal) ning ASOSIY topshiriqnomasi — birinchi
@@ -121,6 +132,19 @@ Bitta to'lov hujjati pulining yo'li. Hozircha FAQAT adminlar (foydalanuvchi qaro
 - `payments_ro` ga `paydocs`, `uzasbo_send`, `payments`, `munis_receive_payment` uchun ham `GRANT SELECT`
   kerak (DEPLOY.md).
 
+## Nazorat paneli — `/dashboard` (2026-09-15)
+
+Bosh sahifa, faqat adminlar (foydalanuvchi tanlovi: pul yo'li + svetofor + dinamika; Telegram — yo'q).
+- **Pul yo'li** (6 bosqich): tushum → biriktirildi (ikkalasi `getBiriktirish` — "Biriktirish borishi" bilan
+  AYNAN bir xil; tuman tanlansa ko'rsatilmaydi, `payments` da tuman yo'q) → 12 kanalga taqsimlandi (`jami`)
+  → tasdiqlandi (`jami − tasdiqlanmagan`) → kiritildi (`otkazilgan`) → to'ladi (`tolangan`). Oraliqdagi
+  yo'qotishlar holatlar bo'linmasidan — yig'indilar tiyinigacha yopiladi.
+- **Og'ir hisob BITTA**: `getRegionMatrix(from, to)` — hudud × 12 kanal × 8 ko'rsatkich + 30+ kun
+  to'lanmagan. Svetofor va matritsa shundan (respublika = yig'indi, hudud = o'sha qator, `matrixOf`);
+  faqat tuman filtrida alohida `getChannelMatrix`. Svetofor chegaralari — sahifadagi `LIGHT`/`LATE_LIGHT`.
+- **Dinamika** (`server/services/nazorat.ts`, 30 kun, `gacha` gacha): tushum, biriktirilgan (hujjat sanasi) va
+  g'aznachilik to'lagan (`uzasbo_treas_oper_date`, `receiver_sum` — PUL OQIMI, kogorta emas).
+
 ## Shartnomalar bo'yicha (2026-09-15)
 
 Mavjud tizimdagi "yilda hisoblangan ijara to'lovlari va penyalar" — AYNAN o'sha ta'rif (foydalanuvchi
@@ -139,12 +163,15 @@ lib/projectDb.ts            readOnly() — project'ga YAGONA kirish
 lib/channels.ts             12 kanal (ustun nomlari — whitelist, `rt` — topshiriqnoma turi) + holatlar
 lib/uzasbo.ts               g'aznachilik holatlari (to'langan = SENT + 4), holat ranglari
 lib/filters.ts              URL ↔ filtr (dan/gacha/hudud/tuman), href()
-server/services/payments.ts BARCHA SQL (to'lovlar): matritsa, hudud/tuman kesimi, qarz yoshi,
-                            shartnoma muammolari, ro'yxat, eksport bo'laklari
+server/services/uzasboSql.ts  topshiriqnoma SQL bo'laklari: GIN ifodasi, PAID, `paid` CTE (bit-maska)
+server/services/paidItems.ts  kanalning to'langan qismlari to'plami (xotira keshi; ro'yxat va eksport)
+server/services/payments.ts BARCHA SQL (to'lovlar): matritsa, hudud × kanal (panel), hudud/tuman kesimi,
+                            qarz yoshi, shartnoma muammolari, ro'yxat, eksport bo'laklari
 server/services/taqsimot.ts BARCHA SQL (taqsimot): hujjat, biriktirish borishi, muammoli hujjatlar,
                             ikki marta to'langan
-app/dashboard/              umumiy · kanal/[key] · royxat · taqsimot (hujjat/biriktirish/muammoli/takroriy)
-                            · users · audit
+server/services/nazorat.ts  nazorat paneli: kunlik dinamika
+app/dashboard/              nazorat paneli · kanal/[key] · royxat · taqsimot (hujjat/biriktirish/muammoli/
+                            takroriy) · shartnomalar · users · audit
 server/services/shartnomalar.ts  BARCHA SQL (shartnomalar bo'yicha): hisoblangan/to'langan/qarzdorlik
 app/api/export/route.ts     Excel (oqim), ro'yxat bilan bir xil Selection
 app/api/taqsimot/…          Excel: bitta hujjat taqsimoti (4 varaq) · biriktirish borishi · hujjatlar

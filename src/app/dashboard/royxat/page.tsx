@@ -12,10 +12,12 @@ import { FilterBar } from "@/components/FilterBar";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR } from "@/components/ui";
 
 const HOLAT_TONE: Record<string, string> = {
-  "O'tkazilgan": "bg-emerald-50 text-emerald-700",
+  "To'langan": "bg-emerald-50 text-emerald-700",
+  Topshiriqnomada: "bg-sky-50 text-sky-800",
   "O'tkazilmagan": "bg-amber-50 text-amber-800",
   Tasdiqlanmagan: "bg-slate-100 text-slate-600",
   "Tasdiqlanmasdan o'tkazilgan": "bg-red-50 text-red-700",
+  "Tasdiqlanmasdan to'langan": "bg-red-50 text-red-700",
 };
 
 export default async function ListPage({ searchParams }: { searchParams: Promise<SP> }) {

@@ -3,9 +3,10 @@ import { unstable_cache } from "next/cache";
 import { env } from "@/lib/env";
 import { readOnly } from "@/lib/projectDb";
 import { CHANNELS, channelByRt } from "@/lib/channels";
-import { PAID_UZASBO_STATUS, isPaid } from "@/lib/uzasbo";
+import { isPaid } from "@/lib/uzasbo";
 import { PAGE_SIZE, PAYMENTS_CACHE_TAG, getRegions, type Metric, type PaymentFilters } from "@/server/services/payments";
 import { isoDate, isoTs, str, toNum, type Row } from "@/server/services/sqlUtil";
+import { ITEMS_ARR, PAID } from "@/server/services/uzasboSql";
 import { shiftDate } from "@/lib/format";
 
 /**
@@ -27,15 +28,7 @@ import { shiftDate } from "@/lib/format";
  * ⚠️ `uzasbo_send` da ham audit triggeri bor — faqat `readOnly()`.
  */
 
-/**
- * Topshiriqnomadagi qism id'lari massivi. ⚠️ Serverdagi `idx_uzasbo_send_items_gin` ifodasi bilan
- * AYNAN bir xil — boshqacha yozilsa indeks ishlamaydi va har so'rov 300 ming qatorni skanlaydi.
- * ⚠️ `String.raw` — oddiy shablonda `\s` jimgina `s` ga aylanardi.
- */
-const ITEMS_ARR = Prisma.raw(String.raw`string_to_array(regexp_replace(u.payment_items_id, '\s+', '', 'g'), ',')`);
-
-/** G'aznachilik ijro etgan (pul to'langan) topshiriqnoma. */
-const PAID = Prisma.raw(`u.state = 1 AND u.status = 'SENT' AND u.uzasbo_status = ${PAID_UZASBO_STATUS}`);
+// `ITEMS_ARR` (GIN indeks ifodasi) va `PAID` — `uzasboSql.ts` da (to'lovlar xizmati bilan umumiy).
 
 /**
  * ⚠️ `payment_items_id` HAR DOIM "shu topshiriqnoma to'lagan qismlar" EMAS (server, 2026-09-15):

@@ -3,6 +3,14 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.6 — 2026-09-17
+
+- **Yo'nalishlar bo'yicha svod** (yangi menyu, faqat adminlar). Pul qaysi oluvchiga ketishi kerakligi
+  bo'yicha umumiy jadval: har yo'nalish uchun hisoblangan, to'langan va **chiqishi kerak** bo'lgan summa
+  (tasdiqlanmagan + tasdiqlangan-kiritilmagan + topshiriqnomada alohida ustunlarda). Tagida yo'nalish ×
+  hudud jadvali — qaysi hududda qaysi yo'nalish bo'yicha qancha pul chiqishi kerakligi. Excel — ikki
+  varaq (auditda). Bazaga qo'shimcha yuk yo'q: hisob nazorat paneliniki bilan umumiy.
+
 ## 0.3.5 — 2026-09-16
 
 - **Og'ir hisoblar 30 daqiqada bir marta** (Nazorat paneli, kanal sahifalari, to'langan qismlar): serverda

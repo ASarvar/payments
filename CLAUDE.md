@@ -145,6 +145,14 @@ Bosh sahifa, faqat adminlar (foydalanuvchi tanlovi: pul yo'li + svetofor + dinam
 - **Dinamika** (`server/services/nazorat.ts`, 30 kun, `gacha` gacha): tushum, biriktirilgan (hujjat sanasi) va
   g'aznachilik to'lagan (`uzasbo_treas_oper_date`, `receiver_sum` — PUL OQIMI, kogorta emas).
 
+## Yo'nalishlar bo'yicha (2026-09-16)
+
+Pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan (`server/services/yonalishlar.ts`). Faqat adminlar.
+- ⚠️ YANGI SQL YO'Q: hammasi `getRegionMatrix` ustidan yig'iladi (nazorat paneli bilan BITTA keshlangan hisob).
+- "Chiqishi kerak" = hisoblangan − to'langan (foydalanuvchi qarori) = tasdiqlanmagan + tasdiqlangan-kiritilmagan
+  + topshiriqnomada (uchalasi alohida ustun). Ikkinchi jadval — yo'nalish × hudud (chiqishi kerak, mln so'm;
+  hudud filtridan qat'i nazar barcha hududlar). Tuman kesimi YO'Q (`payment_items` hudud × kanal hisobi).
+
 ## Shartnomalar bo'yicha (2026-09-15)
 
 Mavjud tizimdagi "yilda hisoblangan ijara to'lovlari va penyalar" — AYNAN o'sha ta'rif (foydalanuvchi
@@ -170,12 +178,14 @@ server/services/payments.ts BARCHA SQL (to'lovlar): matritsa, hudud × kanal (pa
 server/services/taqsimot.ts BARCHA SQL (taqsimot): hujjat, biriktirish borishi, muammoli hujjatlar,
                             ikki marta to'langan
 server/services/nazorat.ts  nazorat paneli: kunlik dinamika
+server/services/yonalishlar.ts  yo'nalishlar svodi (SQL'siz — `getRegionMatrix` ustidan)
 app/dashboard/              nazorat paneli · kanal/[key] · royxat · taqsimot (hujjat/biriktirish/muammoli/
                             takroriy) · shartnomalar · users · audit
 server/services/shartnomalar.ts  BARCHA SQL (shartnomalar bo'yicha): hisoblangan/to'langan/qarzdorlik
 app/api/export/route.ts     Excel (oqim), ro'yxat bilan bir xil Selection
 app/api/taqsimot/…          Excel: bitta hujjat taqsimoti (4 varaq) · biriktirish borishi · hujjatlar
 app/api/shartnomalar        Excel: shartnomalar bo'yicha
+app/api/yonalishlar         Excel: yo'nalishlar svodi (2 varaq)
 ```
 
 - ⚠️ Ustun nomlari SQL'ga faqat `CHANNELS` dan (`Prisma.raw`); qiymatlar doim parametr.

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Layers, List, Split, FileText, Users, ScrollText, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Layers, List, Split, FileText, Users, ScrollText, LogOut, Menu, X, ArrowRightLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { withBase } from "@/lib/basePath";
@@ -27,6 +27,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/dashboard", match: "/dashboard", label: "Nazorat paneli", icon: LayoutDashboard, exact: true, adminOnly: true },
   { href: "/dashboard/kanal/vat", match: "/dashboard/kanal", label: "Kanallar", icon: Layers, adminOnly: true },
+  { href: "/dashboard/yonalishlar", match: "/dashboard/yonalishlar", label: "Yo'nalishlar", icon: ArrowRightLeft, adminOnly: true },
   { href: "/dashboard/royxat", match: "/dashboard/royxat", label: "To'lovlar ro'yxati", icon: List },
   // Hozircha faqat adminlar (foydalanuvchi qarori, 2026-09-15).
   { href: "/dashboard/taqsimot", match: "/dashboard/taqsimot", label: "Taqsimot", icon: Split, adminOnly: true },

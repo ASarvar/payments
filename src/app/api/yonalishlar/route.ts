@@ -9,11 +9,6 @@ import { getYonalishlar, type Yonalishlar } from "@/server/services/yonalishlar"
 
 export const dynamic = "force-dynamic";
 
-/**
- * "Yo'nalishlar bo'yicha" — Excel, sahifa bilan AYNAN bir xil (`getYonalishlar`): 1-varaq
- * yo'nalishlar (so'm), 2-varaq yo'nalish × hudud "chiqishi kerak" (mln so'm).
- * ⚠️ Hozircha faqat adminlar — `getCurrentUser()` moderatorni ham o'tkazadi, tekshiruv shu yerda.
- */
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return new Response("Avtorizatsiya talab qilinadi", { status: 401 });
@@ -45,7 +40,6 @@ export async function GET(req: Request) {
   const navy = "FF07102B";
   const gold = "FFF7F1E4";
 
-  // ── 1-varaq: yo'nalishlar ──
   const ws = wb.addWorksheet("Yo'nalishlar", { views: [{ state: "frozen", xSplit: 2, ySplit: 3 }] });
   const cols = 9;
   ws.columns = [{ width: 5 }, { width: 24 }, ...Array.from({ length: cols - 2 }, () => ({ width: 18 }))];
@@ -84,7 +78,6 @@ export async function GET(req: Request) {
   d.rows.forEach((r, i) => ws.addRow([i + 1, r.label, ...vals(r)]));
   for (let c = 3; c <= cols; c++) ws.getColumn(c).numFmt = c === 5 ? "#,##0.0" : "#,##0.00";
 
-  // ── 2-varaq: yo'nalish × hudud (chiqishi kerak) ──
   const ws2 = wb.addWorksheet("Yo'nalish × hudud", { views: [{ state: "frozen", xSplit: 2, ySplit: 2 }] });
   const cols2 = 2 + d.regions.length + 1;
   ws2.columns = [{ width: 5 }, { width: 24 }, ...d.regions.map(() => ({ width: 14 })), { width: 16 }];

@@ -11,18 +11,6 @@ import { exportChunks, rowHolatLabel, selectionSummary, type Selection } from "@
 
 export const dynamic = "force-dynamic";
 
-/**
- * Excel eksport — ro'yxat sahifasidagi filtrlar bilan AYNAN bir xil (bir xil
- * `Selection`), shuning uchun fayldagi son ekrandagidan farq qilmaydi.
- *
- * Shakl foydalanuvchining hisobot SQL'i bo'yicha: ustunlar o'sha tartibda,
- * BIRINCHI qator — JAMI (ulushlar yig'indisi, "Tuman" ustunida yaratilgan vaqt).
- *
- * ⚠️ OQIM (stream) bilan yoziladi — 300 000 qatorlik fayl xotiraga to'liq yig'ilmaydi.
- * ⚠️ Tartib — `pi.id` bo'yicha (SQL'dagi "Biriktirish sanasi" bilan amalda bir xil:
- *    id yaratilish tartibida o'sadi). Kalit bo'yicha o'qish tez va barqaror.
- * ⚠️ Hisob raqamlari bor — har eksport auditga yoziladi.
- */
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return new Response("Avtorizatsiya talab qilinadi", { status: 401 });
@@ -31,7 +19,6 @@ export async function GET(req: Request) {
   const sp = Object.fromEntries(new URL(req.url).searchParams) as SP;
   const ch = channelByKey(sp.kanal as string | undefined) ?? CHANNELS[0];
   const holat: Holat = isHolat(sp.holat as string | undefined) ? (sp.holat as Holat) : "otkazilmagan";
-  // ⚠️ Moderator — faqat o'z hududi (ro'yxat sahifasi bilan AYNAN bir xil qoida).
   const f = scopeFilters(user, parseFilters(sp).f);
   if (!f) return text("Sizga hudud biriktirilmagan", 403);
   const q = (sp.q as string | undefined)?.trim() || undefined;
@@ -120,7 +107,6 @@ export async function GET(req: Request) {
     sheet.commit();
     await wb.commit();
   })().catch((e) => {
-    // ⚠️ Javob allaqachon boshlangan — faqat oqimni uzamiz (fayl chala qoladi, brauzer xato ko'rsatadi).
     console.error("[export] oqim uzildi:", e);
     pass.destroy(e instanceof Error ? e : new Error(String(e)));
   });

@@ -1,9 +1,3 @@
-// HTTP tekshiruvlari uchun umumiy yordamchilar (`npm run test:http`).
-//
-// ⚠️ Testlar DEV server (3001) va DEV bazalarga qarshi ishlaydi: `npm run dev` hamda
-//    `npm run dev:setup` + `npm run dev:stub` bajarilgan bo'lishi kerak.
-// ⚠️ `project` (soxta baza) — faqat READ ONLY tranzaksiyada o'qiladi.
-// ⚠️ JWT, parol va .env qiymatlari hech qayerga chiqarilmaydi.
 import "dotenv/config";
 import pc from "@prisma/client";
 import { encode } from "@auth/core/jwt";
@@ -14,7 +8,6 @@ export const BASE = process.env.TEST_BASE ?? "http://localhost:3001";
 export const db = new pc.PrismaClient();
 export const proj = new pc.PrismaClient({ datasourceUrl: process.env.PROJECT_DATABASE_URL });
 
-/** Faqat o'qish tranzaksiyasida xom SQL (ilovaning o'zi kabi). */
 export const ro = (sql) =>
   proj.$transaction(async (tx) => {
     await tx.$executeRawUnsafe("SET TRANSACTION READ ONLY");
@@ -24,11 +17,9 @@ export const ro = (sql) =>
 export const get = (path, cookie = "") => fetch(BASE + path, { headers: { cookie }, redirect: "manual" });
 export const isRedirTo = (r, p) => [303, 307, 308].includes(r.status) && (r.headers.get("location") ?? "").includes(p);
 
-/** HTML'ni solishtirishga tayyorlash: React izohlari va BARCHA bo'shliqlar olib tashlanadi. */
 export const norm = (h) => h.replace(/<!-- -->/g, "").replace(/[\s  ]/g, "");
 export const unesc = (h) => h.replace(/&#x27;/g, "'").replace(/&amp;/g, "&");
 
-// Sahifadagi formatlash bilan BIR XIL (`lib/format.ts`), bo'shliqlarsiz.
 export const nf = (n, d = 0) => n.toLocaleString("uz-UZ", { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/[\s  ]/g, "");
 export const sum = (n) => nf(Math.round(n));
 export const mln = (n) => {
@@ -36,7 +27,6 @@ export const mln = (n) => {
   return nf(v === 0 ? 0 : v, 1);
 };
 
-/** Sarlavhasi `label` bo'lgan BIRINCHI jadval qatori kataklari (ichidagi teglarsiz). */
 export function rowCells(html, label) {
   const row = norm(html)
     .split("</tr>")
@@ -50,7 +40,6 @@ export async function xlsx(res) {
   return wb;
 }
 
-/** Test foydalanuvchisi (nomi `test-` bilan boshlanadi — oxirida o'chiriladi) va uning cookie'si. */
 export async function cookieFor(username, role, regionId = null) {
   const u = await db.user.upsert({
     where: { username },
@@ -65,7 +54,6 @@ export async function cookieFor(username, role, regionId = null) {
   })}`;
 }
 
-/** Bitta to'plam natijalari: `t.check(...)` → oxirida `t.lines` va `t.failed`. */
 export function suite(name) {
   const lines = [];
   return {
@@ -83,7 +71,6 @@ export function suite(name) {
   };
 }
 
-/** 12 kanal — `lib/channels.ts` bilan BIR XIL (kalit, summa, tasdiq, belgi, topshiriqnoma turi). */
 export const CHANNELS = [
   ["vat", "vat_sum", "vat_accept", "sent_vat", 1],
   ["mahalliy", "mahalliy_sum", "mahalliy_accept", "sent_mahalliy", 2],
@@ -99,7 +86,6 @@ export const CHANNELS = [
   ["mail", "mail_sum", "mail_accept", "sent_mail", 10],
 ];
 
-// `uzasbo_send` SQL bo'laklari — `server/services/uzasboSql.ts` bilan bir xil ma'noda.
 export const ITEMS_ARR = String.raw`string_to_array(regexp_replace(u.payment_items_id, '\s+', '', 'g'), ',')`;
 export const PAID = "u.state = 1 AND u.status = 'SENT' AND u.uzasbo_status = 4";
 export const PAID_CTE = `paid AS (SELECT e::bigint AS item, bit_or(1 << u.receiver_type) AS mask

@@ -9,33 +9,15 @@ import { PAID_CACHE_SECONDS, PAID_JOIN, paidBit, paidCte } from "@/server/servic
 import { nowTashkent } from "@/lib/format";
 import { getUnpaidSent } from "@/server/services/unpaidItems";
 
-/**
- * To'lovlar taqsimoti — `project.payment_items` ustidan barcha so'rovlar SHU YERDA.
- *
- * ⚠️ Faqat `state = 1` (foydalanuvchi qarori, 2026-09-11). Jonli bazada `state = 0`
- * 176 996 ta (~487 mlrd) — ular hisobotga kirmaydi.
- * ⚠️ Har bir so'rov `readOnly()` ichida (READ ONLY tranzaksiya + statement_timeout).
- * ⚠️ Ustun nomlari faqat `CHANNELS` ro'yxatidan `Prisma.raw` bilan; qiymatlar esa
- * doim parametr (`Prisma.sql`) — foydalanuvchi kiritgani SQL matniga tushmaydi.
- */
-
 export const PAYMENTS_CACHE_TAG = "payments";
 
 export interface PaymentFilters {
-  /** To'lov sanasi (`doc_date`) oralig'i, YYYY-MM-DD, ikkala chegara ham QO'SHIB. */
   from?: string;
   to?: string;
-  /** `lists.type_id = 1` id (hudud). */
   obl?: number;
-  /** `lists.type_id = 2` id (tuman). */
   area?: number;
 }
 
-/**
- * ⚠️ `otkazilgan` = `tolangan` + `topshiriqnomada` (2026-09-15, foydalanuvchi qarori: "o'tkazilgan"
- * ikkiga bo'linadi). `tolangan`/`topshiriqnomada` `paid` CTE talab qiladi (`uzasboSql.ts`) —
- * `metricSelect` ishlatgan so'rovga `WITH ${paidCte(…)}` va `PAID_JOIN` SHART.
- */
 export const METRIC_KEYS = [
   "jami",
   "tasdiqlangan",
@@ -53,7 +35,6 @@ export interface Metric {
 }
 export type Metrics = Record<MetricKey, Metric>;
 
-/** O'tkazilmagan summaning "yoshi" — to'lov sanasidan (`doc_date`) bugungacha. */
 export const AGE_BUCKETS = [
   { key: "a30", label: "0–30 kun", sql: "<= 30" },
   { key: "a90", label: "31–90 kun", sql: "BETWEEN 31 AND 90" },
@@ -63,9 +44,6 @@ export const AGE_BUCKETS = [
 ] as const;
 export type AgeKey = (typeof AGE_BUCKETS)[number]["key"];
 
-// ── Yordamchilar ────────────────────────────────────────────────────────────
-
-/** Ustun nomi — FAQAT `CHANNELS` dan keladigan qiymat bilan chaqiring. */
 function col(name: string): Prisma.Sql {
   return Prisma.raw(`pi.${name}`);
 }
@@ -76,19 +54,11 @@ function mustChannel(key: string): Channel {
   return ch;
 }
 
-/**
- * `paidSql` — "g'aznachilik to'lagan" sharti. Standarti — `paid` CTE bit-maskasi (agregatlar:
- * panel, kanal sahifalari). Ro'yxat va eksport uni TESKARI ro'yxat bilan almashtiradi
- * (`unpaidItems.ts`) — o'shanda so'rovga `paid` CTE ham, `PAID_JOIN` ham kerak emas.
- */
 function metricConds(ch: Channel, paidSql?: Prisma.Sql): Record<MetricKey, Prisma.Sql> {
   const S = col(ch.sum);
   const A = col(ch.accept);
   const T = col(ch.sent);
   const P = paidSql ?? paidBit(ch.rt);
-  // ⚠️ `IS TRUE` / `IS NOT TRUE` — NULL ham "yo'q" hisoblanadi (`= true` NULL'ni tashlab ketardi).
-  // ⚠️ To'langan — FAQAT belgisi bor (`sent`) ulushlar ichida: belgisiz, lekin to'langan (kutilmagan)
-  // ulush o'tkazilmagan/tasdiqlanmaganda qoladi — ular QQS SQL'i bilan mos turishi shart.
   return {
     jami: Prisma.sql`${S} > 0`,
     tasdiqlangan: Prisma.sql`${S} > 0 AND ${A} IS TRUE`,
@@ -101,14 +71,6 @@ function metricConds(ch: Channel, paidSql?: Prisma.Sql): Record<MetricKey, Prism
   };
 }
 
-/**
- * Faol shartnoma sharti — foydalanuvchi SQL'idagi JOIN sharti bilan bir xil
- * (`co.state = 1 AND co.doc_status = 3`).
- *
- * ⚠️ `JOIN` EMAS, `EXISTS`: `vw_all_contracts` — ko'rinish, unda bitta `id` bir
- * necha marta uchrasa JOIN qatorni ko'paytirib, SUMMALARNI jimgina oshirib yuborardi.
- * EXISTS esa qatorni hech qachon ko'paytirmaydi.
- */
 const ACTIVE_CONTRACT = Prisma.sql`c.id = pi.contract_id AND c.state = 1 AND c.doc_status = 3`;
 const NO_REQUISITES = Prisma.sql`(NULLIF(btrim(c.owner_account), '') IS NULL OR NULLIF(btrim(c.owner_mfo), '') IS NULL)`;
 
@@ -133,10 +95,6 @@ function filterConds(f: PaymentFilters): Prisma.Sql[] {
   return c;
 }
 
-/**
- * Qidiruv: raqam bo'lsa — biriktirish ID, to'lov ID, BS STIR yoki shartnoma raqami
- * (aniq); matn bo'lsa — shartnoma raqami (qism bo'yicha).
- */
 function qCond(q: string): Prisma.Sql {
   const t = q.trim();
   if (/^\d{1,18}$/.test(t)) {
@@ -150,7 +108,6 @@ function qCond(q: string): Prisma.Sql {
 
 const whereSql = (conds: Prisma.Sql[]) => Prisma.join(conds, " AND ");
 
-/** Oltita ko'rsatkich (soni + summasi) — `prefix` bilan nomlangan ustunlar. */
 function metricSelect(ch: Channel, prefix: string): Prisma.Sql {
   const S = col(ch.sum);
   const conds = metricConds(ch);
@@ -183,21 +140,15 @@ export function addMetrics(a: Metrics, b: Metrics): Metrics {
 }
 
 const cacheOpts = () => ({ revalidate: env.CACHE_SECONDS, tags: [PAYMENTS_CACHE_TAG] });
-/** `paid` CTE li (to'langanlikka bog'liq) og'ir hisoblar — `PAID_CACHE_SECONDS` (30 daqiqa). */
 const paidCacheOpts = () => ({ revalidate: PAID_CACHE_SECONDS, tags: [PAYMENTS_CACHE_TAG] });
-
-// ── Umumiy ko'rinish: 12 kanal matritsasi ────────────────────────────────────
 
 export interface ChannelMatrix {
   total: Metric;
-  /** Filtr doirasidagi eng so'nggi biriktirish vaqti (ma'lumot yangiligi). */
   lastCreated: string | null;
-  /** Qachon hisoblangan ("YYYY-MM-DD HH:mm:ss", Toshkent) — kesh 30 daqiqagacha. */
   computedAt: string;
   channels: { key: string; label: string; m: Metrics }[];
 }
 
-/** BITTA jadval skanida 12 kanal × 8 ko'rsatkich (tuman filtri bo'lsa; aks holda `getRegionMatrix`). */
 async function computeMatrix(f: PaymentFilters): Promise<ChannelMatrix> {
   const selects = CHANNELS.map((ch) => metricSelect(ch, `${ch.key}__`));
   const rows = await readOnly((tx) =>
@@ -220,9 +171,6 @@ async function computeMatrix(f: PaymentFilters): Promise<ChannelMatrix> {
 export const getChannelMatrix = (f: PaymentFilters) =>
   unstable_cache(computeMatrix, ["pay-matrix-v3"], paidCacheOpts())(f);
 
-// ── Nazorat paneli: hudud × 12 kanal (bitta skan) ───────────────────────────
-
-/** Shu kundan ko'p to'lanmagan ulush — "kechikkan" (to'lov sanasidan bugungacha). */
 export const LATE_DAYS = 30;
 
 export interface RegionMatrixRow {
@@ -230,9 +178,7 @@ export interface RegionMatrixRow {
   name: string;
   total: Metric;
   lastCreated: string | null;
-  /** Kanal kaliti → ko'rsatkichlar. */
   channels: Record<string, Metrics>;
-  /** 12 kanal bo'yicha to'lanmagan ulushlar (to'langan = belgi + g'aznachilik), `LATE_DAYS` dan eski. */
   late: number;
 }
 
@@ -241,11 +187,6 @@ export interface RegionMatrix {
   computedAt: string;
 }
 
-/**
- * Hududlar × 12 kanal × 8 ko'rsatkich — `paid` CTE bilan BITTA skan. Nazorat panelidagi svetofor
- * VA kanallar matritsasi shundan (butun respublika = qatorlar yig'indisi, hudud = o'sha qator) —
- * og'ir CTE hudud tanlanganda qayta hisoblanmaydi. Tuman filtri — `getChannelMatrix`.
- */
 async function computeRegionMatrix(from: string | undefined, to: string | undefined): Promise<RegionMatrix> {
   const selects = CHANNELS.map((ch) => metricSelect(ch, `${ch.key}__`));
   const late = Prisma.join(
@@ -268,7 +209,6 @@ async function computeRegionMatrix(from: string | undefined, to: string | undefi
       WHERE ${whereSql(filterConds({ from, to }))}
       GROUP BY pi.obl_id`),
   );
-  // Serverdagi tezlikni kuzatish uchun (`docker compose logs web`).
   console.log(`[nazorat] hudud × kanal (${from ?? "…"} — ${to ?? "…"}): ${Date.now() - t0} ms`);
   const out = rows
     .map((r) => {
@@ -289,7 +229,6 @@ async function computeRegionMatrix(from: string | undefined, to: string | undefi
 export const getRegionMatrix = (from: string | undefined, to: string | undefined) =>
   unstable_cache(computeRegionMatrix, ["pay-region-matrix-v2"], paidCacheOpts())(from, to);
 
-/** Hudud qatorlari (yoki bittasi) → kanallar matritsasi. */
 export function matrixOf(rows: RegionMatrixRow[], computedAt: string): ChannelMatrix {
   let lastCreated: string | null = null;
   const total: Metric = { n: 0, s: 0 };
@@ -307,8 +246,6 @@ export function matrixOf(rows: RegionMatrixRow[], computedAt: string): ChannelMa
     channels: CHANNELS.map((ch) => ({ key: ch.key, label: ch.label, m: byKey.get(ch.key) ?? emptyMetrics() })),
   };
 }
-
-// ── Kanal: hududlar kesimi + qarz yoshi ─────────────────────────────────────
 
 export interface GroupRow {
   id: number | null;
@@ -374,11 +311,6 @@ async function computeByDistrict(key: string, f: PaymentFilters): Promise<GroupR
 export const getByDistrict = (key: string, f: PaymentFilters) =>
   unstable_cache(computeByDistrict, ["pay-district-v2"], paidCacheOpts())(key, f);
 
-/**
- * O'tkazilmagan ulushlar ichidagi shartnoma muammolari.
- * ⚠️ Eng og'ir so'rov (ko'rinishga murojaat) — sahifa uni ALOHIDA kutadi, u sekin
- * yoki xato bo'lsa qolgan jadvallar baribir ko'rinadi.
- */
 export interface ContractIssues {
   shartnomasiz: Metric;
   rekvizitsiz: Metric;
@@ -406,8 +338,6 @@ async function computeContractIssues(key: string, f: PaymentFilters): Promise<Co
 export const getContractIssues = (key: string, f: PaymentFilters) =>
   unstable_cache(computeContractIssues, ["pay-issues-v1"], cacheOpts())(key, f);
 
-// ── Ma'lumotnomalar ─────────────────────────────────────────────────────────
-
 export interface Option {
   id: number;
   name: string;
@@ -425,7 +355,6 @@ async function computeRegions(): Promise<Option[]> {
 export const getRegions = () =>
   unstable_cache(computeRegions, ["pay-regions-v1"], { revalidate: 3600, tags: [PAYMENTS_CACHE_TAG] })();
 
-/** Hududdagi tumanlar — faqat to'lovlarda haqiqatan uchraydiganlari. */
 async function computeDistricts(obl: number): Promise<Option[]> {
   const rows = await readOnly((tx) =>
     tx.$queryRaw<Row[]>(Prisma.sql`
@@ -443,8 +372,6 @@ async function computeDistricts(obl: number): Promise<Option[]> {
 export const getDistricts = (obl: number) =>
   unstable_cache(computeDistricts, ["pay-districts-v1"], { revalidate: 3600, tags: [PAYMENTS_CACHE_TAG] })(obl);
 
-// ── Ro'yxat va eksport ──────────────────────────────────────────────────────
-
 export interface PaymentRow {
   id: string;
   payId: string | null;
@@ -455,7 +382,6 @@ export interface PaymentRow {
   share: number;
   accepted: boolean | null;
   sent: boolean | null;
-  /** G'aznachilikda to'langan (faqat `sent` bo'lsa — `withPaid`, kanalning to'langan qismlari to'plamidan). */
   paid: boolean;
   region: string | null;
   district: string | null;
@@ -475,12 +401,6 @@ export function rowHolatLabel(r: Pick<PaymentRow, "accepted" | "sent" | "paid">)
   return r.accepted === true ? "O'tkazilmagan" : "Tasdiqlanmagan";
 }
 
-/**
- * Berilgan id'lar uchun to'liq qatorlar (tartib saqlanadi).
- * ⚠️ Shartnoma `LATERAL … LIMIT 1` bilan — dublikat bo'lsa ham qator ko'paymaydi.
- * Ko'rinishga faqat shu (≤ bo'lak hajmi) qatorlar uchun murojaat qilinadi.
- * `paid` bu yerda `false` — keyin `withPaid` qo'yadi (tranzaksiyadan tashqarida).
- */
 async function detailRows(tx: Prisma.TransactionClient, ch: Channel, ids: string[]): Promise<PaymentRow[]> {
   if (ids.length === 0) return [];
   const rows = await tx.$queryRaw<Row[]>(Prisma.sql`
@@ -532,22 +452,14 @@ export interface Selection {
   q?: string;
 }
 
-/** Holatning o'zi to'langanlikka bog'liq — `paid` CTE kerak. */
 const PAID_HOLATLAR: readonly Holat[] = ["tolangan", "topshiriqnomada"];
 
-/**
- * Ro'yxat/eksport so'rovi. To'langanlikka bog'liq holatlarda "to'langan" sharti KESHLANGAN TESKARI
- * ro'yxatdan quriladi: kiritilgan VA to'lanmaganlar ro'yxatida YO'Q (`unpaidItems.ts`) — so'rovga
- * `paid` CTE kerak emas, parametr esa bir necha KB (to'langanlar ro'yxati ~2 MB bo'lardi).
- * `knownPaid` — shu holatdagi har qatorning to'langanligi (qo'shimcha tekshiruvsiz).
- */
 async function selectionSql(
   sel: Selection,
 ): Promise<{ ch: Channel; conds: Prisma.Sql[]; from: Prisma.Sql; knownPaid?: boolean }> {
   const ch = mustChannel(sel.channel);
   const from = Prisma.sql`payment_items pi`;
   if (!PAID_HOLATLAR.includes(sel.holat)) {
-    // Belgisiz holatlarda to'langan ulush bo'lmaydi (`tolangan` ⊂ `sent`).
     const unsent = sel.holat === "otkazilmagan" || sel.holat === "tasdiqlanmagan" || sel.holat === "shartnomasiz" || sel.holat === "rekvizitsiz";
     const conds = [...filterConds(sel.f), holatCond(ch, sel.holat)];
     if (sel.q) conds.push(qCond(sel.q));
@@ -559,7 +471,6 @@ async function selectionSql(
   return { ch, conds, from, knownPaid: sel.holat === "tolangan" };
 }
 
-/** Qatorlarga to'langanlik belgisi: holat hal qilgan bo'lsa — o'sha; aks holda kanal to'plamidan. */
 async function withPaid(rows: PaymentRow[], ch: Channel, knownPaid?: boolean): Promise<PaymentRow[]> {
   if (knownPaid !== undefined) {
     for (const r of rows) r.paid = knownPaid && r.sent === true;
@@ -573,9 +484,7 @@ async function withPaid(rows: PaymentRow[], ch: Channel, knownPaid?: boolean): P
 
 export interface SelectionSummary {
   n: number;
-  /** Kanal ulushlari yig'indisi. */
   s: number;
-  /** To'lovlarning to'liq summasi (`asum`). */
   asum: number;
 }
 
@@ -601,7 +510,6 @@ export async function listPayments(sel: Selection, page: number): Promise<{ summ
     const summary = { n: toNum(agg?.n), s: toNum(agg?.s), asum: toNum(agg?.a) };
     const pages = Math.max(1, Math.ceil(summary.n / PAGE_SIZE));
     const p = Math.min(Math.max(1, page), pages);
-    // ⚠️ Avval faqat id'lar (ko'rinishga murojaatsiz), keyin 50 ta qator uchun tafsilot.
     const idRows = await tx.$queryRaw<{ id: bigint }[]>(Prisma.sql`
       SELECT pi.id FROM ${from} WHERE ${whereSql(conds)}
       ORDER BY pi.doc_date DESC, pi.id DESC
@@ -613,13 +521,6 @@ export async function listPayments(sel: Selection, page: number): Promise<{ summ
   return res;
 }
 
-/**
- * Eksport uchun bo'lak-bo'lak o'qish — butun natija xotiraga yig'ilmaydi.
- * ⚠️ Kalit bo'yicha (`pi.id >`), OFFSET emas: chuqur OFFSET har bo'lakda boshidan
- * sanab chiqadi va 300 000 qatorda kvadratik sekinlashardi.
- * ⚠️ To'langanlik holatlarida ham shu yo'l: shart keshlangan TESKARI ro'yxatdan (bir necha KB),
- * shuning uchun bo'lak boshiga qayta yuborilishi muammo emas.
- */
 export async function* exportChunks(sel: Selection, chunk = 5000): AsyncGenerator<PaymentRow[]> {
   const { ch, conds, from, knownPaid } = await selectionSql(sel);
   let last: string | null = null;

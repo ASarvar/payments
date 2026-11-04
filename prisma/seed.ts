@@ -1,14 +1,3 @@
-/**
- * Birinchi super adminni yaratadi.
- *
- *   npm run db:seed                                   (dev)
- *   docker compose --profile setup run --rm seed      (server)
- *
- * ⚠️ Mavjud foydalanuvchining parolini O'ZGARTIRMAYDI — qayta ishga tushirish
- * xavfsiz. Parolni tiklash kerak bo'lsa: `--reset-password` bayrog'i (barcha
- * sessiyalari ham bekor bo'ladi).
- * ⚠️ Parol faqat env'dan olinadi va hech qayerga chiqarilmaydi.
- */
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";

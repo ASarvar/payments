@@ -11,7 +11,7 @@ import { Pager, TaqsimotNav } from "../parts";
 const PATH = "/dashboard/taqsimot/takroriy";
 
 export default async function DoublePaidPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect(); // faqat adminlar
+  await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
       <>

@@ -1,7 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 
-// O'z bazamiz (foydalanuvchilar, audit). Dev'da hot-reload ko'p ulanish ochmasligi
-// uchun global singleton.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =

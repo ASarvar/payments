@@ -1,4 +1,3 @@
-// Sahifalar ochiladimi va KIM nimani ko'radi (rollar matritsasi).
 import { cookieFor, get, isRedirTo, norm, ro, unesc } from "./_lib.mjs";
 
 export const NAME = "Sahifalar va ruxsatlar";
@@ -12,7 +11,6 @@ export default async function run(t) {
   const [doc] = await ro(`SELECT p.id::text AS id FROM paydocs p JOIN payment_items pi ON pi.pay_id = p.id
     WHERE p.state = 1 AND pi.state = 1 ORDER BY p.id LIMIT 1`);
 
-  // Adminga ochiq sahifalar
   const adminPages = [
     "/dashboard",
     "/dashboard/kanal/vat",
@@ -32,7 +30,6 @@ export default async function run(t) {
     t.check(`A ${p}`, r.status === 200 && !body.includes("ma'lumot olishda xato"), String(r.status));
   }
 
-  // Excel yo'llari
   const apis = [
     "/api/export?kanal=vat&holat=otkazilmagan&hudud=26",
     `/api/taqsimot?id=${doc.id}`,
@@ -43,13 +40,11 @@ export default async function run(t) {
   ];
   for (const p of apis) t.check(`A ${p}`, (await get(p, A)).status === 200);
 
-  // Faqat super admin: foydalanuvchilar va audit
   for (const p of ["/dashboard/users", "/dashboard/audit"]) {
     t.check(`SA ${p}`, (await get(p, SA)).status === 200);
     t.check(`A ${p} → topilmadi`, (await get(p, A)).status === 404);
   }
 
-  // Moderatorlar: faqat ro'yxat va o'z Excel'i
   for (const [who, C] of [["M", M], ["RM", RM]]) {
     for (const p of adminPages.filter((x) => !x.startsWith("/dashboard/royxat"))) {
       t.check(`${who} ${p} → ro'yxatga`, isRedirTo(await get(p, C), "/dashboard/royxat"));
@@ -61,11 +56,9 @@ export default async function run(t) {
     }
   }
 
-  // Hudud moderatori — URL'dagi boshqa hudud e'tiborsiz
   const mHtml = norm(unesc(await (await get("/dashboard/royxat?hudud=3", M)).text()));
   t.check("M boshqa hudud so'ralsa — o'z hududi", mHtml.includes("Toshkentsh."), "hudud=3 berilgan");
 
-  // Kesh isitish yo'li: sessiya emas, TOKEN tekshiriladi (cron chaqiradi)
   const warm = process.env.WARM_TOKEN;
   if (warm) {
     const noToken = await get("/api/warm", "");
@@ -79,7 +72,6 @@ export default async function run(t) {
     t.check("warm: WARM_TOKEN sozlanmagan — o'tkazib yuborildi", true);
   }
 
-  // Anonim
   for (const p of ["/dashboard", "/dashboard/royxat"]) {
     t.check(`anonim ${p} → login`, isRedirTo(await get(p, ""), "/login"));
   }

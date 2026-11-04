@@ -16,7 +16,6 @@ const TABS = [
 
 export type TaqsimotTab = (typeof TABS)[number]["key"];
 
-/** Taqsimot bo'limi ichidagi yorliqlar. */
 export function TaqsimotNav({ active }: { active: TaqsimotTab }) {
   return (
     <nav className="mb-4 flex flex-wrap gap-1.5">
@@ -37,7 +36,6 @@ export function TaqsimotNav({ active }: { active: TaqsimotTab }) {
   );
 }
 
-/** Yo'l ko'rsatkichi: Respublika → hudud → hujjatlar. Oxirgisi — joriy sahifa (havolasiz). */
 export function Crumbs({ items }: { items: { label: string; href?: string }[] }) {
   return (
     <nav className="mb-3 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
@@ -65,11 +63,8 @@ export function Chip({ tone, children, title }: { tone: keyof typeof TONE_CLS; c
   );
 }
 
-// ── Hujjatning kanallar bo'yicha taqsimoti (Taqsimot sahifasi + hujjatlar ro'yxatidagi ochiladigan qator) ──
-
 const ZERO: Omit<ChannelDist, "key" | "label" | "lastPaid"> = { share: 0, accepted: 0, included: 0, paid: 0, noSend: 0, extraPaid: 0 };
 
-/** Faqat ulushi (yoki belgisi/to'lovi) bor kanallar. */
 const shownChannels = (d: Distribution) => d.channels.filter((c) => c.share > 0 || c.included > 0 || c.paid > 0);
 
 export function ChannelsSubtitle({ d }: { d: Distribution }) {
@@ -156,7 +151,6 @@ export function ChannelsTable({ d }: { d: Distribution }) {
   );
 }
 
-/** Sahifalash (ro'yxat sahifasidagi bilan bir xil ko'rinish). */
 export function Pager({
   page,
   pages,

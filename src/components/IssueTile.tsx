@@ -2,10 +2,6 @@ import Link from "next/link";
 import { nf, sum } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/**
- * "Diqqat talab qiladi" kartasi: soni + summasi, noldan katta bo'lsa qizil. `failed` — so'rov
- * yiqilgan (qolgan sahifa baribir ko'rinadi), `n === undefined` — hali hisoblanmagan.
- */
 export function IssueTile({
   title,
   n,
@@ -19,7 +15,6 @@ export function IssueTile({
   s?: number;
   href: string;
   failed?: string;
-  /** Kichik izoh (masalan "barcha davr"). */
   note?: string;
 }) {
   const bad = (n ?? 0) > 0;

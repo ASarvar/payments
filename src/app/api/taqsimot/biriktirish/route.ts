@@ -8,11 +8,6 @@ import { BIR_TYPES, getBiriktirish, totalBir, type BirRow } from "@/server/servi
 
 export const dynamic = "force-dynamic";
 
-/**
- * "Biriktirish borishi" — Excel, sahifa bilan AYNAN bir xil ma'lumot (`getBiriktirish`), mln so'mda.
- * Shakl mavjud tizimdagi hisobotdek (ikki qavatli sarlavha), JAMI qatori — birinchi.
- * ⚠️ Hozircha faqat adminlar — `getCurrentUser()` moderatorni ham o'tkazadi, tekshiruv shu yerda.
- */
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return new Response("Avtorizatsiya talab qilinadi", { status: 401 });
@@ -37,7 +32,7 @@ export async function GET(req: Request) {
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Biriktirish", { views: [{ state: "frozen", xSplit: 2, ySplit: 3 }] });
-  const cols = 8 + BIR_TYPES.length + 1; // №, hudud, bir kunda ×3, tushum, biriktirilmagan, biriktirilgan, turlar, MUNIS
+  const cols = 8 + BIR_TYPES.length + 1;
   ws.columns = [{ width: 5 }, { width: 22 }, ...Array.from({ length: cols - 2 }, () => ({ width: 13 }))];
 
   ws.mergeCells(1, 1, 1, cols);

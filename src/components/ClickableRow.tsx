@@ -4,11 +4,6 @@ import { useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-/**
- * Bosiladigan jadval qatori: bosilganda `href` ga yumshoq o'tadi (sahifa qayta yuklanmaydi, joy
- * saqlanadi). Ichidagi havola/tugma bosilsa yoki matn belgilansa — o'tmaydi. Klaviatura uchun
- * qatorda alohida havola bo'lishi shart (masalan ▸ belgisi) — `tr` o'zi fokus olmaydi.
- */
 export function ClickableRow({
   href,
   expanded,

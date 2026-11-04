@@ -12,15 +12,9 @@ const credsSchema = z.object({
   password: z.string().min(1).max(200),
 });
 
-/**
- * Parol tanlashdan himoya: bitta login uchun 15 daqiqada 10 ta XATO urinish.
- * ⚠️ Faqat xatolar sanaladi (muvaffaqiyatli kirish hisobni tozalaydi).
- * ⚠️ Xotirada — bitta `web` jarayoni bor, qayta ishga tushsa nolga qaytadi (yetarli).
- */
 const MAX_FAILS = 10;
 const failures = new RateLimiterMemory({ points: MAX_FAILS, duration: 15 * 60 });
 
-// Email YO'Q: login + parol. Ochiq ro'yxatdan o'tish YO'Q — foydalanuvchini super admin qo'shadi.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -41,7 +35,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = user?.isActive ? await bcrypt.compare(parsed.data.password, user.passwordHash) : false;
         if (!user || !ok) {
           await failures.consume(username).catch(() => undefined);
-          // ⚠️ Parol HECH QACHON yozilmaydi — faqat login.
           await audit(user?.id ?? null, "LOGIN_FAILED", { username });
           return null;
         }

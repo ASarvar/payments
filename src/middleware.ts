@@ -3,15 +3,10 @@ import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
 import { BASE_PATH } from "@/lib/basePath";
 
-// Middleware faqat edge-safe authConfig'dan foydalanadi (Prisma import qilinmaydi).
 const { auth } = NextAuth(authConfig);
 
 const LOGIN_PATH = `${BASE_PATH}/login`;
 
-// ⚠️ NextAuth'ning O'ZIDAGI signIn redirect'i Next.js basePath'ni HISOBGA OLMAYDI,
-//    shuning uchun himoya va redirect shu yerda QO'LDA (obyektlar ilovasidagi bilan bir xil).
-//    Tashqi domen `Host` / `X-Forwarded-*` sarlavhalaridan olinadi — `nextUrl.origin`
-//    reverse-proxy ortida ichki `127.0.0.1:3000` ni ko'rsatadi.
 export default auth((req) => {
   if (req.auth) return;
 
@@ -27,7 +22,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  // Statik fayllar, logotiplar, auth API va kesh isitish yo'lidan tashqari hamma narsa himoyalangan.
-  // ⚠️ `api/warm` — sessiyasiz chaqiriladi (serverdagi cron), lekin o'zi `WARM_TOKEN` ni tekshiradi.
   matcher: ["/((?!api/auth|api/warm|_next/static|_next/image|favicon.ico|.*\\.svg$).*)"],
 };

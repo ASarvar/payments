@@ -13,13 +13,8 @@ import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, 
 
 const PATH = "/dashboard/pul-biriktirish";
 
-/**
- * PUL BIRIKTIRISH — biriktirishni bekor qilish (`payment_items.state = 0`).
- * ⚠️ Ilovadagi YAGONA yozuv amali; shart — summasi > 0 bo'lgan kanallarda `sent_*` true BO'LMASLIGI.
- * ⚠️ Faqat adminlar (foydalanuvchi qarori, 2026-11-04); moderatorlar ro'yxatga yo'naltiriladi.
- */
 export default async function PulBiriktirishPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect(); // faqat adminlar
+  await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
       <>

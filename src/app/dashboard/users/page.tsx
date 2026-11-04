@@ -11,7 +11,6 @@ export default async function UsersPage() {
       orderBy: [{ role: "asc" }, { username: "asc" }],
       select: { id: true, username: true, fullName: true, role: true, regionId: true, isActive: true, lastLoginAt: true },
     }),
-    // `project` bazasi ishlamasa ham sahifa ochilsin — faqat moderator qo'shib bo'lmaydi.
     getRegions().then(
       (r): RegionOpt[] | null => r,
       () => null,
@@ -19,7 +18,6 @@ export default async function UsersPage() {
   ]);
   const regions = regionsOrNull ?? [];
 
-  // ⚠️ Sana SERVERDA formatlanadi — client komponent gidratsiyasi buzilmasin.
   const views: UserView[] = users.map((u) => ({
     id: u.id,
     username: u.username,

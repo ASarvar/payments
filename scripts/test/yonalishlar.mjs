@@ -1,4 +1,3 @@
-// Yo'nalishlar svodi: bosqichlar, "chiqishi kerak" tarkibi, hudud kesimi va Excel.
 import { CHANNELS, DEFAULT_FROM, PAID_CTE, cookieFor, get, mln, norm, paidBit, ro, rowCells, sum, unesc, xlsx } from "./_lib.mjs";
 
 export const NAME = "Yo'nalishlar bo'yicha";

@@ -3,12 +3,10 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { refreshDataAction } from "@/app/dashboard/actions";
 import { getCurrentUser, isModerator } from "@/lib/authz";
 
-// Jadval klasslari — hamma sahifada bir xil ko'rinish.
 export const th = "px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground";
 export const thR = `${th} text-right`;
 export const td = "px-3 py-2 align-top text-[13px] text-slate-700";
 export const tdR = `${td} whitespace-nowrap text-right tabular-nums`;
-/** JAMI qatori — birinchi, oltin fonda (obyektlar hisobotidagi uslub). */
 export const totalRow = "border-b border-border font-semibold";
 export const totalStyle = { background: "var(--gold-lighter)" } as const;
 
@@ -29,10 +27,6 @@ export function PageHeader({ title, subtitle, children }: { title: string; subti
   );
 }
 
-/**
- * "Yangilash" — faqat moderator EMASlarga (`refreshDataAction` ham `requireAdmin` bilan
- * tekshiradi). Qaror shu yerda — sahifalar uni prop bilan eslab qolishi shart emas.
- */
 async function RefreshButton() {
   const user = await getCurrentUser();
   if (!user || isModerator(user)) return null;

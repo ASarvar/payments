@@ -14,7 +14,6 @@ declare module "next-auth" {
   interface User {
     role: Role;
     username: string;
-    // Ixtiyoriy: `session` callback'ida tokendan `number | undefined` tushadi.
     sessionVersion?: number;
   }
 }

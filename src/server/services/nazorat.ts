@@ -7,17 +7,6 @@ import { PAYMENTS_CACHE_TAG } from "@/server/services/payments";
 import { isoDate, toNum, type Row } from "@/server/services/sqlUtil";
 import { PAID } from "@/server/services/uzasboSql";
 
-/**
- * NAZORAT PANELI — kunlik dinamika (oxirgi `DYNAMICS_DAYS` kun). Uch oqim, har biri O'Z sanasi bilan:
- *   tushum        = paydocs.asum             (state = 1, `doc_date` — "Biriktirish borishi" bilan bir xil)
- *   biriktirilgan = payments.parsing_sum (`doc_date`) + MUNIS real_sum (status > NEW, `created_at` kuni)
- *   to'langan     = uzasbo_send.receiver_sum (g'aznachilik to'lagan, `uzasbo_treas_oper_date` kuni)
- * ⚠️ To'langan — PUL OQIMI (shu kuni g'aznachilik to'lagani), kogorta emas: pul yo'lidagi "to'landi"
- * bosqichi (to'lov sanasi bo'yicha qismlar) bilan to'g'ridan-to'g'ri solishtirilmaydi.
- * ⚠️ Tushum/biriktirilgan — "Biriktirish borishi" kabi faqat `lists` hududlari (obl_id > 0);
- * to'langan — hudud tanlanmasa BARCHA topshiriqnomalar (respublika darajasidagilari ham).
- */
-
 export const DYNAMICS_DAYS = 30;
 
 export interface DayPoint {

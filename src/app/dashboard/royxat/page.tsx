@@ -21,7 +21,6 @@ const HOLAT_TONE: Record<string, string> = {
 };
 
 export default async function ListPage({ searchParams }: { searchParams: Promise<SP> }) {
-  // Moderatorga ochiq yagona sahifa.
   const user = await requireUserOrRedirect({ moderator: true });
   if (!projectConfigured()) {
     return (
@@ -35,9 +34,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const ch = channelByKey(one(sp.kanal)) ?? CHANNELS[0];
   const holatRaw = one(sp.holat);
-  // Standart — asosiy savol: "nima tasdiqlangan-u, hali o'tkazilmagan".
   const holat: Holat = isHolat(holatRaw) ? holatRaw : "otkazilmagan";
-  // ⚠️ Moderator — faqat o'z hududi (URL'dagi `hudud` e'tiborsiz). Eksport ham xuddi shunday.
   const f = scopeFilters(user, parseFilters(sp).f);
   if (!f) {
     return (
@@ -58,7 +55,6 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   const districts = districtsR.status === "fulfilled" ? districtsR.value : [];
   if (f.area !== undefined && !districts.some((d) => d.id === f.area)) f.area = undefined;
 
-  // Moderatorga hudud tanlovi o'rniga — qat'iy qiymat.
   const lockedRegion =
     isRegionModerator(user) && f.obl !== undefined
       ? { value: String(f.obl), label: regions.find((r) => r.id === f.obl)?.name ?? `#${f.obl}` }
@@ -73,7 +69,6 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
     error = projectErrorMessage(e);
   }
 
-  // ⚠️ Sahifalash va eksport BIR XIL parametrlardan quriladi — yangi filtr qo'shsangiz shu yerga ham.
   const baseParams = { kanal: ch.key, holat, ...filterParams(f), q };
   const pageHref = (p: number) => href("/dashboard/royxat", { ...baseParams, p: p > 1 ? p : undefined });
   const exportHref = withBase(href("/api/export", baseParams));
@@ -189,7 +184,6 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
   );
 }
 
-/** `taqsimot` — to'lov raqami Taqsimot sahifasiga havola (u faqat adminlarga ochiq). */
 function Row({ r, taqsimot }: { r: PaymentRow; taqsimot: boolean }) {
   const h = rowHolatLabel(r);
   return (

@@ -9,15 +9,13 @@ import { PAYMENTS_CACHE_TAG } from "@/server/services/payments";
 import { clearUnpaidCache } from "@/server/services/unpaidItems";
 
 export async function signOutAction() {
-  // Auth.js core `redirectTo` ni mutlaq URL qiladi — basePath'ni qo'lda qo'shamiz.
   await signOut({ redirectTo: withBase("/login") });
 }
 
-/** Keshni tashlab, ko'rsatkichlarni bazadan qayta hisoblatadi. */
 export async function refreshDataAction() {
   const user = await requireAdmin();
   revalidateTag(PAYMENTS_CACHE_TAG);
-  clearUnpaidCache(); // to'lanmagan qismlar to'plami — xotirada, tag bilan tashlanmaydi
+  clearUnpaidCache();
   revalidatePath("/dashboard", "layout");
   await audit(user.id, "REFRESH_CACHE");
 }

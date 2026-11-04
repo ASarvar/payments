@@ -1,12 +1,3 @@
-/**
- * Audit yozuvlarini tozalash — eski yozuvlar cheksiz to'planib ketmasin.
- *
- * Ishga tushirish (serverda, oyda bir marta — DEPLOY.md §6):
- *   docker compose --profile maintenance run --rm prune
- *
- * ⚠️ `AUDIT_KEEP_DAYS` kundan eski yozuvlar O'CHIRILADI (standart — 365 kun).
- * ⚠️ Faqat `AuditLog`: foydalanuvchilar va boshqa ma'lumotlarga tegilmaydi.
- */
 import { PrismaClient } from "@prisma/client";
 
 const KEEP_DAYS = Number(process.env.AUDIT_KEEP_DAYS ?? 365);

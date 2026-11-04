@@ -12,13 +12,8 @@ import { Crumbs, TaqsimotNav } from "../../parts";
 
 const BASE = "/dashboard/taqsimot/biriktirish";
 
-/**
- * Bitta hudud: hisobot davri, joriy oy, kecha, bugun — eski tizimdagi "tushgan mablag'larning
- * taqsimlanishi" jadvali. Har qator respublika jadvali bilan AYNAN bir xil formula (`getBiriktirish`
- * shu hudud bilan). Qator bosilsa — o'sha oraliqdagi hujjatlar.
- */
 export default async function BirHududPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect(); // faqat adminlar
+  await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
       <>

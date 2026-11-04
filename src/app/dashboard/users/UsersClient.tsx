@@ -15,10 +15,8 @@ export interface UserView {
   username: string;
   fullName: string;
   role: Role;
-  /** Faqat moderator uchun. */
   regionId: number | null;
   isActive: boolean;
-  /** Serverda formatlangan satr (gidratsiya uchun). */
   lastLogin: string;
   isSelf: boolean;
 }
@@ -36,12 +34,6 @@ function Msg({ s }: { s: ActionState }) {
   ) : null;
 }
 
-/**
- * Rol va hudud. Ikkalasi ham NAZORATSIZ (`defaultValue`): forma amalidan keyin React ularni
- * boshlang'ich qiymatga qaytaradi — xato bo'lsa saqlanmagan rol ko'rinib qolmaydi.
- * Hudud tanlovi faqat "Hudud moderatori" tanlanganda ko'rinadi — JS holatisiz, CSS `:has()`
- * bilan (`globals.css` → `.role-fields`). Hududni server tekshiradi (majburiy).
- */
 function RoleFields({
   role,
   regionId,
@@ -54,7 +46,6 @@ function RoleFields({
   compact?: boolean;
 }) {
   const cls = compact ? `${inputCls} py-1.5` : inputCls;
-  // `project` bazasi ishlamasa ro'yxat bo'sh — joriy hudud baribar tanlovda qolsin (saqlash buzilmasin).
   const missingId = regionId !== null && !regions.some((g) => g.id === regionId) ? regionId : null;
   return (
     <span className="role-fields contents">
@@ -80,8 +71,6 @@ function RoleFields({
 
 export function CreateUserForm({ regions }: { regions: RegionOpt[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(createUserAction, null);
-  // Xato bo'lsa server kiritilgan qiymatlarni (parolsiz) qaytaradi; `key` maydonlarni shu
-  // qiymatlar bilan qayta chizadi — React'ning forma tozalashi ularni o'chirib yubormaydi.
   const v = state?.values;
   return (
     <form action={action} className="space-y-2 p-4">
@@ -130,7 +119,6 @@ export function UserRow({ u, regions }: { u: UserView; regions: RegionOpt[] }) {
         <div className="text-[12px] text-muted-foreground">{u.fullName}</div>
       </td>
       <td className="px-3 py-2.5">
-        {/* `key` — bazadagi qiymat o'zgarsa forma yangi boshlang'ich qiymatlar bilan qayta chiziladi. */}
         <form key={`${u.role}:${u.regionId}:${u.isActive}`} action={updAction} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="userId" value={u.id} />
           <RoleFields role={u.role} regionId={u.regionId} regions={regions} compact />

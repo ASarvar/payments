@@ -28,13 +28,8 @@ import { ChannelsSubtitle, ChannelsTable, Crumbs, Pager, TaqsimotNav } from "../
 
 const BASE = "/dashboard/taqsimot/biriktirish";
 
-/**
- * Bitta hudud to'lov hujjatlari va har biriga biriktirilgani (eski tizimdagi "tushgan mablag'larning
- * biriktirilishi" ro'yxati). Hujjat ID si — bizning Taqsimot sahifasi. Bu ilova hech narsani
- * biriktirmaydi — faqat ko'rsatadi.
- */
 export default async function BirDocsPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect(); // faqat adminlar
+  await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
       <>
@@ -90,7 +85,6 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
     }
   }
 
-  // Qator bosilganda (`ochiq`) — shu hujjatning kanallar bo'yicha taqsimoti qator ostida (faqat joriy sahifadagisi).
   const ochiqRaw = one(sp.ochiq);
   const ochiq = ochiqRaw && /^\d{1,18}$/.test(ochiqRaw) && docs.some((d) => d.id === ochiqRaw) ? ochiqRaw : undefined;
   let openDist: Distribution | null = null;
@@ -271,7 +265,6 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
                       {open ? (
                         <tr className="border-b border-border bg-muted/20">
                           <td colSpan={9 + BIR_TYPES.length} className="p-0">
-                            {/* sticky — keng jadval yon tomonga surilganda ham panel ko'rinib turadi */}
                             <div className="sticky left-0 max-w-[calc(100vw-3rem)] p-3 md:max-w-[calc(100vw-20rem)]">
                               <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
                                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">

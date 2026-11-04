@@ -9,22 +9,11 @@ import {
   type PaymentFilters,
 } from "@/server/services/payments";
 
-/**
- * YO'NALISHLAR BO'YICHA SVOD — pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan.
- *
- * ⚠️ Yangi SQL YO'Q: hammasi `getRegionMatrix` (hudud × 12 kanal, nazorat paneli bilan BITTA
- * keshlangan hisob) ustidan yig'iladi — sahifa qo'shimcha yuk bermaydi.
- * "Chiqishi kerak" = hisoblangan − to'langan (foydalanuvchi qarori, 2026-09-16): tasdiqlanmagan +
- * tasdiqlangan-kiritilmagan + topshiriqnomada — uchalasi alohida ustunda.
- */
-
 export interface YoRow {
   key: string;
   label: string;
   m: Metrics;
-  /** Chiqishi kerak: hisoblangan − to'langan. */
   qoldiq: number;
-  /** Hudud id → chiqishi kerak (hudud filtridan QAT'I NAZAR — barcha hududlar). */
   byRegion: Record<number, number>;
 }
 
@@ -36,14 +25,12 @@ export interface YoRegion {
 export interface Yonalishlar {
   rows: YoRow[];
   total: YoRow;
-  /** Ustunlar — ma'lumoti bor hududlar, rasmiy tartibda. */
   regions: YoRegion[];
   computedAt: string;
 }
 
 const qoldiqOf = (m: Metrics): number => Math.max(0, m.jami.s - m.tolangan.s);
 
-/** `f.obl` — asosiy jadval shu hudud bo'yicha; hudud kesimi (`byRegion`) doim to'liq. */
 export async function getYonalishlar(f: PaymentFilters): Promise<Yonalishlar> {
   const [rm, regionList] = await Promise.all([getRegionMatrix(f.from, f.to), getRegions().catch(() => [])]);
   const names = new Map(regionList.map((r) => [r.id, r.name]));

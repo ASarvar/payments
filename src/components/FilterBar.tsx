@@ -10,18 +10,6 @@ export const inputCls =
   "rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-cobalt focus:ring-2 focus:ring-cobalt/20";
 export const labelCls = "text-[11px] font-medium uppercase tracking-wide text-muted-foreground";
 
-/**
- * Oddiy GET forma (JS'siz ishlaydi). Faqat berilgan maydonlar chiziladi.
- *
- * ⚠️ `action` ATAYLAB berilmagan — GET forma joriy URL'ga yuboradi va production'dagi
- * `/payments` sub-path'i saqlanadi.
- * ⚠️ Bo'sh `dan` ham yuboriladi (`dan=`) — bu "sanani ataylab tozaladim" degani
- * (`lib/filters.ts`), aks holda standart sana (`DEFAULT_FROM`) har safar qaytib kelardi.
- * ⚠️ Hudud o'zgarganda eski tuman qolib ketishi mumkin — sahifa uni o'sha hudud
- * tumanlari ro'yxatiga qarab tekshiradi va mos kelmasa tashlaydi.
- * `lockedRegion` — hudud moderatori uchun: tanlov o'rniga qat'iy qiymat (yashirin `hudud`
- * yuboriladi, aks holda tuman filtri ishlamasdi). Cheklovni server baribar majburlaydi.
- */
 export function FilterBar({
   values,
   resetHref,
@@ -44,7 +32,6 @@ export function FilterBar({
   showQ?: boolean;
   hidden?: Record<string, string>;
   lockedRegion?: Opt;
-  /** Qo'shimcha tanlovlar (masalan "turi") — holatdan keyin chiziladi. */
   selects?: { name: string; label: string; value?: string; options: Opt[] }[];
   children?: React.ReactNode;
 }) {
@@ -155,8 +142,6 @@ export function FilterBar({
         <Search className="h-4 w-4" />
         Qo&apos;llash
       </button>
-      {/* ⚠️ Oddiy <a> — Link EMAS: to'liq yuklash inputlarni tozalaydi (defaultValue client
-          navigatsiyada yangilanmaydi). Shuning uchun basePath QO'LDA (`withBase`). */}
       <a
         href={withBase(resetHref)}
         className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-slate-600 transition hover:bg-muted"

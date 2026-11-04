@@ -3,11 +3,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-/**
- * Asosiy ko'rsatkich kartasi (obyektlar monitoringidagi bilan bir xil ko'rinish).
- * ⚠️ `accent` 6 xonali hex bo'lishi shart — hover fonlari alfa qo'shib quriladi.
- * ⚠️ `href` dagi filtr kartadagi son bilan AYNAN bir xil mezonda bo'lishi shart.
- */
 export function KpiCard({
   label,
   value,

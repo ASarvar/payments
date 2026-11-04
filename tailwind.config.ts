@@ -1,8 +1,6 @@
 import type { Config } from "tailwindcss";
 
-// Palitra obyektlar monitoringi bilan bir xil — ikki ilova bir tashkilotniki.
 const config: Config = {
-  // `src/lib` ham — holat ranglari (`lib/uzasbo.ts` → TONE_CLS) o'sha yerda.
   content: ["./src/components/**/*.{ts,tsx}", "./src/app/**/*.{ts,tsx}", "./src/lib/**/*.{ts,tsx}"],
   theme: {
     extend: {

@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 :root {
-  /* Palitra obyektlar monitoringi bilan bir xil */
   --navy: #07102b;
   --navy-mid: #0d1e45;
   --cobalt: #1a3a7c;
@@ -32,8 +31,6 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* Foydalanuvchilar: hudud tanlovi faqat "Hudud moderatori" tanlanganda (`UsersClient` → RoleFields).
-   JS holatisiz — forma amalidan keyin React maydonlarni qaytarganda ko'rinish ham o'zi to'g'rilanadi. */
 .role-fields:not(:has(option[value="MODERATOR"]:checked)) .role-region {
   display: none;
 }

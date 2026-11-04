@@ -18,7 +18,6 @@ import { ChannelsSubtitle, ChannelsTable, Chip, TaqsimotNav } from "./parts";
 const ID_RE = /^\d{1,18}$/;
 
 export default async function TaqsimotPage({ searchParams }: { searchParams: Promise<SP> }) {
-  // Hozircha FAQAT adminlar (foydalanuvchi qarori, 2026-09-15) — moderator ro'yxatga yuboriladi.
   await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
@@ -43,7 +42,6 @@ export default async function TaqsimotPage({ searchParams }: { searchParams: Pro
     try {
       dist = await getDistribution(id);
       if (!dist) {
-        // Biriktirish (qism) ID si kiritilgan bo'lishi mumkin — o'z hujjatiga o'tamiz.
         const payId = await findPayIdByItem(id);
         if (payId && payId !== id) goTo = href("/dashboard/taqsimot", { id: payId, qism: id });
         else missing = true;
@@ -53,7 +51,6 @@ export default async function TaqsimotPage({ searchParams }: { searchParams: Pro
       error = projectErrorMessage(e);
     }
   }
-  // ⚠️ try TASHQARISIDA — redirect() xato tashlab ishlaydi, catch uni yutib yuborardi.
   if (goTo) redirect(goTo);
 
   return (
@@ -67,7 +64,6 @@ export default async function TaqsimotPage({ searchParams }: { searchParams: Pro
       <form className="mb-5 flex flex-wrap items-end gap-2 rounded-xl border border-border bg-card p-3 shadow-sm">
         <label className="flex min-w-[240px] flex-1 flex-col gap-1">
           <span className={labelCls}>To&apos;lov hujjati ID</span>
-          {/* `key` — boshqa hujjatga havola orqali o'tilganda maydon yangi qiymat bilan qayta chiziladi. */}
           <input
             key={raw}
             type="text"
@@ -126,7 +122,6 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
   const { doc } = d;
   const remainder = doc.asum - d.attached.s;
   const balanced = Math.abs(remainder) < 0.005;
-  // Takroriy ro'yxatdagilar (to'plangan ro'yxat) yashiriladi — summaga kirmaydi, soni pastda aytiladi.
   const shownSends = d.sends.filter((s) => s.role !== "takror");
   const repeatSends = d.sends.length - shownSends.length;
 

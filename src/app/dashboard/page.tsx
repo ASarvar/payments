@@ -26,15 +26,8 @@ import { IssueTile } from "@/components/IssueTile";
 import { DayChart, SERIES } from "@/components/DayChart";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, totalStyle } from "@/components/ui";
 
-/**
- * NAZORAT PANELI (2026-09-15, foydalanuvchi tanlovi): pul yo'li zanjiri, hududlar svetofori, kunlik
- * dinamika va 12 kanal matritsasi — bitta sahifada. Og'ir hisob `getRegionMatrix` da (hudud × kanal,
- * bitta skan): svetofor ham, matritsa ham shundan — hudud tanlanganda qayta hisoblanmaydi.
- */
-
-/** Svetofor chegaralari, % — faqat shu yerda. */
-const LIGHT = { good: 95, warn: 85 } as const; // biriktirilgan / to'langan ulushi: ≥ good yashil, ≥ warn sariq, qolgani qizil
-const LATE_LIGHT = { good: 5, warn: 15 } as const; // kechikkan / taqsimlangan: ≤ good yashil, ≤ warn sariq, qolgani qizil
+const LIGHT = { good: 95, warn: 85 } as const;
+const LATE_LIGHT = { good: 5, warn: 15 } as const;
 
 type Tone = "good" | "warn" | "bad" | "none";
 const TONE_COLOR: Record<Tone, string> = { good: "#16a34a", warn: "#f59e0b", bad: "#dc2626", none: "#cbd5e1" };
@@ -57,10 +50,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   }
 
   const sp = await searchParams;
-  // Standart sana (`DEFAULT_FROM`) hamma sahifada bir xil — jadvaldagi son = ro'yxatdagi son.
   const { f, danExplicit } = parseFilters(sp);
   const today = todayTashkent();
-  // Kirim (biriktirish) va dinamika aniq oxirgi kunni talab qiladi; qismlar — `f.to` (ro'yxat bilan bir xil).
   const to = f.to ?? today;
 
   const [regionsR, districtsR] = await Promise.allSettled([
@@ -69,7 +60,6 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   ]);
   const regions = regionsR.status === "fulfilled" ? regionsR.value : [];
   const districts = districtsR.status === "fulfilled" ? districtsR.value : [];
-  // Hudud almashganda eski tuman qolib ketgan bo'lsa — tashlanadi (natija jimgina bo'sh chiqmasin).
   if (f.area !== undefined && !districts.some((d) => d.id === f.area)) f.area = undefined;
   const regionName = (id: number) => regions.find((r) => r.id === id)?.name ?? `#${id}`;
 
@@ -92,7 +82,6 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const birRows = val(birR);
   const dyn = val(dynR);
 
-  // Kanallar matritsasi: tuman → alohida so'rov; hudud → o'sha qator; aks holda — hammasi.
   const matrix: ChannelMatrix | null =
     f.area !== undefined
       ? val(tmR)
@@ -102,7 +91,6 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const matrixError = f.area !== undefined ? tmR : rmR;
   const totals = matrix ? matrix.channels.reduce((acc, c) => addMetrics(acc, c.m), emptyMetrics()) : null;
 
-  // Kirim (tushum → biriktirildi): `payments` da tuman yo'q — tuman tanlansa ko'rsatilmaydi.
   const kirim: (BirAmounts & { day: BirAmounts }) | null =
     f.area !== undefined || !birRows
       ? null
@@ -427,13 +415,10 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   );
 }
 
-// ── Pul yo'li ────────────────────────────────────────────────────────────────
-
 interface Stage {
   label: string;
   hint: string;
   value: number;
-  /** Foiz shu summaga nisbatan (birinchi bosqichda — o'zi). */
   base: number;
   day?: string;
   gap?: { label: string; value: number; href: string; tone: "bad" | "warn" };
@@ -470,7 +455,6 @@ function StageCard({ n, s }: { n: number; s: Stage }) {
       </p>
       {s.day ? <p className="mt-0.5 text-[11.5px] text-slate-600">{s.day}</p> : null}
       {g && gm ? (
-        // Sahifa ichidagi (#kanallar) havola — oddiy <a>; boshqa sahifaga — Link.
         g.href.startsWith("#") ? (
           <a href={g.href} className="mt-auto pt-2.5">
             <GapChip g={g} gm={gm} />
@@ -498,8 +482,6 @@ function GapChip({ g, gm }: { g: NonNullable<Stage["gap"]>; gm: { value: string;
   );
 }
 
-// ── Svetofor ────────────────────────────────────────────────────────────────
-
 interface LightRow {
   id: number;
   name: string;
@@ -513,7 +495,6 @@ interface LightRow {
   paidPct: number | null;
 }
 
-/** Hududlar (id > 0) — qismlar va kirim birlashtirilib; eng yomoni tepada, keyin to'langan ulushi o'sib. */
 function lightRows(regionRows: RegionMatrixRow[] | null, bir: BirRow[] | null, name: (id: number) => string): LightRow[] {
   const ids = new Set<number>();
   for (const r of regionRows ?? []) if (r.id !== null && r.id > 0) ids.add(r.id);
@@ -560,8 +541,6 @@ function Pct({ tone, text }: { tone: Tone; text: string }) {
     </span>
   );
 }
-
-// ── Dinamika ────────────────────────────────────────────────────────────────
 
 function Dynamics({ points, scope, area }: { points: DayPoint[]; scope: string; area: boolean }) {
   const t = points.reduce((a, p) => a + p.tushum, 0);

@@ -12,7 +12,6 @@ import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, 
 const groupTh = `${th} border-l border-border text-center`;
 
 export default async function ShartnomalarPage({ searchParams }: { searchParams: Promise<SP> }) {
-  // Hozircha faqat adminlar — moderator ro'yxatga yuboriladi.
   await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (

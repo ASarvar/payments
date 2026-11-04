@@ -1,6 +1,3 @@
-// "To'langan" / "Topshiriqnomada": ro'yxat, qator belgilari va Excel bazaga mos kelishi.
-// ⚠️ Shart keshlangan TESKARI ro'yxatdan quriladi (`server/services/unpaidItems.ts`) — bu yerda
-//    bazadan to'g'ridan-to'g'ri hisoblangani bilan solishtiriladi.
 import { CHANNELS, DEFAULT_FROM, ITEMS_ARR, PAID, cookieFor, get, norm, nf, ro, sum, xlsx } from "./_lib.mjs";
 
 export const NAME = "To'langan / topshiriqnomada";
@@ -31,12 +28,10 @@ export default async function run(t) {
       t.check(`${key} ${holat}: qator belgisi`, n === 0 || h.includes(`>${badge}</span>`));
     }
 
-    // Ikkisi birga = "o'tkazilgan" (sent IS TRUE) — holatlar bo'linishi buzilmaganini ko'rsatadi.
     const otk = norm(await (await get(`/dashboard/royxat?kanal=${key}&holat=otkazilgan`, A)).text());
     t.check(`${key} to'langan + topshiriqnomada = o'tkazilgan`, otk.includes(`">${nf(e.tol_n + e.top_n)}taulush`), nf(e.tol_n + e.top_n));
   }
 
-  // Excel: qatorlar soni va holat ustuni
   const [key, S, , T, rt] = CHANNELS[0];
   const [x] = await ro(`WITH paid AS (
       SELECT DISTINCT e::bigint AS item FROM uzasbo_send u CROSS JOIN LATERAL unnest(${ITEMS_ARR}) AS e

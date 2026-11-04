@@ -8,19 +8,14 @@ import { isoDate, isoTs, str, toNum, type Row } from "@/server/services/sqlUtil"
 import { ITEMS_ARR } from "@/server/services/uzasboSql";
 import { ITEM_SHARES, SINGLE_ITEM_RT, bool, cacheOpts, strList } from "./shared";
 
-/** Bitta to'lov hujjati (`paydocs`) pulining yo'li — qismlar, 12 kanal ulushi, topshiriqnomalar. */
-
 export interface PayDoc {
   id: string;
   docNum: string | null;
   docDate: string | null;
   asum: number;
   type: string | null;
-  /** `cl_name` — "STIR NOMI HISOB MFO" bitta satrda. */
   payer: string | null;
-  /** `ca_name` — qabul qiluvchi (odatda g'aznachilik hisobi). */
   receiver: string | null;
-  /** `anote` — to'lov maqsadi. */
   note: string | null;
   region: string | null;
   district: string | null;
@@ -44,20 +39,10 @@ export interface DistItem {
   contractActive: boolean;
   ownerName: string | null;
   ownerTin: string | null;
-  /** Kanal kaliti → ulush (faqat summasi > 0 lari). */
   shares: Record<string, Share>;
-  /**
-   * Kanal kaliti → g'aznachilikda to'langan: 1 — to'langan; 2+ — faqat balansda saqlovchi uchun
-   * (boshqa kanallarda takroriy ro'yxat ikki marta to'lash degani emas — `SINGLE_ITEM_RT`).
-   */
   paidTimes: Record<string, number>;
 }
 
-/**
- * Topshiriqnomaning shu hujjatdagi o'rni: `asosiy` — kamida bitta ulushni shu to'lagan (yoki
- * to'lanmagan bo'lsa — hozirgi jarayondagisi); `tarix` — rad etilgan/qayta yaratilgan/o'chirilgan;
- * `takror` — to'plangan ro'yxatda qismni QAYTA sanagan, summaga kirmaydi.
- */
 export type SendRole = "asosiy" | "tarix" | "takror";
 
 export interface DistSend {
@@ -66,7 +51,6 @@ export interface DistSend {
   channelKey: string | null;
   channelLabel: string;
   receiverName: string | null;
-  /** Topshiriqnomaning TO'LIQ summasi (boshqa hujjatlar qismlari ham kiradi). */
   receiverSum: number;
   status: string;
   uzasboStatus: number | null;
@@ -75,13 +59,9 @@ export interface DistSend {
   dateFrom: string | null;
   dateTo: string | null;
   createdAt: string | null;
-  /** Qaysi RAD ETILGAN topshiriqnoma o'rniga yaratilgan (yangi → eski). */
   recreated: string | null;
-  /** Topshiriqnomadagi jami qism soni. */
   itemCount: number;
-  /** Shu hujjatning topshiriqnoma ro'yxatidagi qismlari. */
   ourIds: string[];
-  /** Shu hujjat qismlarining ulushi — faqat bu topshiriqnoma ASOSIY bo'lgan ulushlar. */
   docShare: number;
   paid: boolean;
   role: SendRole;
@@ -92,23 +72,17 @@ export interface ChannelDist {
   label: string;
   share: number;
   accepted: number;
-  /** `sent_*` belgisi bor — topshiriqnomaga kiritilgan. */
   included: number;
-  /** G'aznachilikda to'langan (bir necha marta bo'lsa ham bir marta sanaladi). */
   paid: number;
   lastPaid: string | null;
-  /** Belgi bor, lekin topshiriqnoma (o'chirilmagan) topilmadi. */
   noSend: number;
-  /** Ikki va undan ko'p marta to'langan — ORTIQCHA qismi (faqat balansda saqlovchi). */
   extraPaid: number;
 }
 
 export interface Distribution {
   doc: PayDoc;
   items: DistItem[];
-  /** Hammasi, `takror` lari ham (Excel uchun); sahifa ularni yashiradi. */
   sends: DistSend[];
-  /** 12 kanal, `CHANNELS` tartibida (faqat faol qismlar). */
   channels: ChannelDist[];
   attached: Metric;
   channelsSum: number;
@@ -126,8 +100,6 @@ async function computeDistribution(id: string): Promise<Distribution | null> {
       WHERE p.id = ${id}::bigint`);
     if (!d) return null;
 
-    // ⚠️ Shartnoma `LATERAL … LIMIT 1` — ko'rinishda dublikat id bo'lsa ham qator ko'paymaydi.
-    // Faol bo'lmasa ham raqami ko'rsatiladi (faoli birinchi).
     const itemRows = await tx.$queryRaw<Row[]>(Prisma.sql`
       SELECT pi.id, pi.state, pi.asum, pi.doc_date, pi.created_at, ${ITEM_SHARES},
              co.new_contract_number, co.owner_name, co.owner_tin, co.active AS contract_active
@@ -142,7 +114,6 @@ async function computeDistribution(id: string): Promise<Distribution | null> {
       ORDER BY pi.state DESC, pi.id`);
 
     const ids = itemRows.map((r) => String(r.id));
-    // ⚠️ `ORDER BY … u.id` — `assemble` "birinchi to'langan"ni shu tartibga tayanib tanlaydi.
     const sendRows =
       ids.length === 0
         ? []
@@ -223,7 +194,6 @@ function assemble(d: Row, itemRows: Row[], sendRows: Row[]): Distribution {
     };
   });
 
-  // (qism, kanal) → uni ro'yxatida keltirgan topshiriqnomalar, id tartibida (SQL shunday beradi).
   const byKey = new Map<string, typeof base>();
   for (const s of base) {
     if (!s.channelKey) continue;
@@ -235,14 +205,11 @@ function assemble(d: Row, itemRows: Row[], sendRows: Row[]): Distribution {
     }
   }
 
-  /** `${qism}:${kanal}` → ASOSIY topshiriqnoma id si (`SINGLE_ITEM_RT` izohiga qarang). */
   const primary = new Map<string, string>();
-  /** O'chirilmagan topshiriqnomaga kirgan ulushlar. */
   const inSend = new Set<string>();
   for (const [key, list] of byKey) {
     const [itemId, chKey] = key.split(":");
     const paidList = list.filter((s) => s.paid);
-    // To'langan bo'lsa — birinchi to'langani; aks holda eng so'nggi jarayondagisi.
     const main = paidList[0] ?? [...list].reverse().find((s) => s.status === "CREATED" || s.status === "SENT");
     if (main) primary.set(key, main.id);
     if (list.some((s) => s.status !== "DELETED")) inSend.add(key);
@@ -298,7 +265,6 @@ function assemble(d: Row, itemRows: Row[], sendRows: Row[]): Distribution {
 
 export const getDistribution = (id: string) => unstable_cache(computeDistribution, ["taq-doc-v2"], cacheOpts())(id);
 
-/** Biriktirish (qism) ID si kiritilgan bo'lsa — uning hujjati. */
 export async function findPayIdByItem(itemId: string): Promise<string | null> {
   const rows = await readOnly((tx) =>
     tx.$queryRaw<Row[]>(Prisma.sql`SELECT pay_id FROM payment_items WHERE id = ${itemId}::bigint`),

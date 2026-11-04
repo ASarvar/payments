@@ -3,6 +3,17 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.4.0 — 2026-11-05
+
+- **Kod izohlardan tozalandi** (foydalanuvchi talabi): 80 ta kod faylidan 448 izoh va
+  `globals.css` dan 2 izoh olib tashlandi. Faqat ishlashga ta'sir qiladiganlari qoldi
+  (`eslint-disable`, `next-env.d.ts` direktivalari). Kod o'zgarmagan: har fayl TypeScript
+  parseri bilan tozalanib, keyin token-token solishtirildi.
+- **`KOD-ESLATMALARI.md`** — izohlardagi, boshqa hujjatlarda yo'q bo'lgan nozik joylar fayl
+  bo'yicha saqlab qolindi (edge middleware va env, `session-expired` himoyasi, `FilterBar` da
+  `action` yo'qligi, `rt 11` taxmini, dev stub'dagi ataylab qo'yilgan holatlar va boshqalar).
+- Bundan keyin kodga izoh yozilmaydi — qoida `CLAUDE.md` da.
+
 ## 0.3.9 — 2026-11-05
 
 - **"Pul biriktirish" serverda ishlamayotgani tuzatildi.** Bekor qilishda baza "ruxsat yo'q" deb

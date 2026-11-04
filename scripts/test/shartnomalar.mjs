@@ -1,4 +1,3 @@
-// Shartnomalar bo'yicha: yil tanlovi, jadval va Excel bazaga mos kelishi.
 import { cookieFor, get, nf, norm, ro, today, unesc, xlsx } from "./_lib.mjs";
 
 export const NAME = "Shartnomalar bo'yicha";
@@ -25,7 +24,7 @@ export default async function run(t) {
   t.check("Excel 200", r.status === 200, String(r.status));
   if (r.status === 200) {
     const ws = (await xlsx(r)).worksheets[0];
-    const j = ws.getRow(4); // 1 — sarlavha, 2–3 — jadval boshi, 4 — JAMI
+    const j = ws.getRow(4);
     t.check("Excel: soni = baza", Number(j.getCell(3).value) === e.cnt, `${j.getCell(3).value} / ${e.cnt}`);
     t.check("Excel: hisoblangan = baza", Math.abs(Number(j.getCell(5).value) * 1e6 - e.hisob) < 1, `${Number(j.getCell(5).value) * 1e6} / ${e.hisob}`);
     t.check("Excel: to'langan = baza", Math.abs(Number(j.getCell(11).value) * 1e6 - e.paid) < 1, `${Number(j.getCell(11).value) * 1e6} / ${e.paid}`);

@@ -2,47 +2,14 @@ import { Prisma } from "@prisma/client";
 import { env } from "@/lib/env";
 import { PAID_UZASBO_STATUS } from "@/lib/uzasbo";
 
-/**
- * To'langanlikka bog'liq OG'IR hisoblar kesh muddati (panel, kanal sahifalari, to'langan qismlar
- * to'plami). Serverda hudud × kanal 16 s (2026-09-15) — foydalanuvchi qarori: 30 daqiqa. Eskirgan
- * natija darhol beriladi, yangisi fonda; "Yangilash" — darhol. `CACHE_SECONDS` dan kam bo'lmaydi.
- */
 export const PAID_CACHE_SECONDS = Math.max(env.CACHE_SECONDS, 1800);
 
-/**
- * `uzasbo_send` (g'aznachilikka topshiriqnomalar) bo'yicha SQL bo'laklari — to'lovlar va taqsimot
- * xizmatlari uchun UMUMIY. Barchasi `u` taxallusiga (`uzasbo_send u`) tayanadi.
- */
-
-/**
- * Topshiriqnomadagi qism id'lari massivi. ⚠️ Serverdagi `idx_uzasbo_send_items_gin` ifodasi bilan
- * AYNAN bir xil — boshqacha yozilsa indeks ishlamaydi va har so'rov 300 ming qatorni skanlaydi.
- * ⚠️ `String.raw` — oddiy shablonda `\s` jimgina `s` ga aylanardi.
- */
 export const ITEMS_ARR = Prisma.raw(String.raw`string_to_array(regexp_replace(u.payment_items_id, '\s+', '', 'g'), ',')`);
 
-/**
- * Ro'yxatni YOYISH uchun (indekssiz): `ITEMS_ARR` bilan bir xil natija, lekin `translate` —
- * serverda (2026-09-15) barcha to'langan ro'yxatlarda `regexp_replace` 3,9 s olardi (6,45 mln id).
- * ⚠️ GIN qidiruvida (`&&`, `@>`) FAQAT `ITEMS_ARR` — indeks o'sha ifoda bo'yicha.
- */
 export const ITEMS_PARSED = Prisma.raw(String.raw`string_to_array(translate(u.payment_items_id, E' \t\n\r\f', ''), ',')`);
 
-/** G'aznachilik ijro etgan (pul to'langan) topshiriqnoma. */
 export const PAID = Prisma.raw(`u.state = 1 AND u.status = 'SENT' AND u.uzasbo_status = ${PAID_UZASBO_STATUS}`);
 
-/**
- * `paid` CTE: qism id → g'aznachilik TO'LAGAN kanallar bit-maskasi (`1 << receiver_type`). Ulush
- * to'langan = qism shu kanalning kamida bitta to'langan topshiriqnomasi ro'yxatida bor (Taqsimot
- * sahifasidagi "asosiy topshiriqnoma" bilan bir xil ta'rif).
- *
- * ⚠️ OG'IR: to'langan topshiriqnomalarning BARCHA ro'yxatlari yoyiladi (birlashtirilgan turlarda
- * ro'yxat davr boshidan to'planadi — bitta QQS qismi yuzlab marta uchraydi). Shuning uchun natijalar
- * keshlanadi va bitta kanal kerak bo'lsa `rts` bilan toraytiriladi. Filtrdagi qismlar bo'yicha
- * toraytirib bo'lmaydi — ro'yxat qaysi qismlarni o'z ichiga olgani oldindan noma'lum.
- * Serverda (2026-09-15): barcha turlar + QQS skani — 7,6 s. Faqat keshlangan hisobotlarda.
- * Ulanish: `LEFT JOIN paid pd ON pd.item = pi.id` (`PAID_JOIN`), shart — `paidBit(rt)`.
- */
 export function paidCte(rts?: readonly number[]): Prisma.Sql {
   const only = rts && rts.length > 0 ? Prisma.sql`AND u.receiver_type = ANY(${[...rts]}::int[])` : Prisma.empty;
   return Prisma.sql`paid AS (
@@ -54,7 +21,6 @@ export function paidCte(rts?: readonly number[]): Prisma.Sql {
 
 export const PAID_JOIN = Prisma.sql`LEFT JOIN paid pd ON pd.item = pi.id`;
 
-/** `paid` ulangan so'rovda: shu kanal (`rt`) ulushi to'langan. `rt` — faqat `CHANNELS` dan. */
 export function paidBit(rt: number): Prisma.Sql {
   if (!Number.isInteger(rt) || rt < 1 || rt > 30) throw new Error(`Noto'g'ri topshiriqnoma turi: ${rt}`);
   return Prisma.raw(`(COALESCE(pd.mask, 0) & ${1 << rt}) <> 0`);

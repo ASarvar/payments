@@ -6,13 +6,6 @@ export const one = (v: string | string[] | undefined): string | undefined => (Ar
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/**
- * Standart boshlanish sanasi — `dan` berilmaganda, BARCHA kanal va sahifalarda
- * (foydalanuvchi qarori, 2026-09-14: "13.05.2025 dan, kunning o'zi bilan").
- * ⚠️ QO'SHIB hisoblanadi (`doc_date >= 2025-05-13`) — foydalanuvchining QQS SQL'idagi
- * `doc_date > '2025-05-13'` dan 13-may kuni bilan farq qiladi, bu ATAYLAB.
- * Standart FILTR, qoida emas: foydalanuvchi sanani o'zgartira yoki tozalay oladi.
- */
 export const DEFAULT_FROM = "2025-05-13";
 
 function int(v: string | undefined): number | undefined {
@@ -20,16 +13,6 @@ function int(v: string | undefined): number | undefined {
   return Number(v);
 }
 
-/**
- * URL → filtr. Parametrlar: `dan`, `gacha` (YYYY-MM-DD), `hudud`, `tuman`.
- *
- * ⚠️ `dan` ning uch holati bor:
- *   - YO'Q (parametr umuman berilmagan) → `DEFAULT_FROM`;
- *   - BO'SH (`dan=`) → foydalanuvchi sanani ataylab tozalagan, filtr yo'q;
- *   - sana → o'sha sana.
- * Busiz sanani o'chirib bo'lmasdi — standart har safar qaytib kelardi.
- * `danExplicit` — sahifa "standart sana qo'llandi" deb ko'rsatishi uchun.
- */
 export function parseFilters(sp: SP): { f: PaymentFilters; danExplicit: boolean } {
   const danRaw = one(sp.dan);
   const danExplicit = danRaw !== undefined;
@@ -41,23 +24,16 @@ export function parseFilters(sp: SP): { f: PaymentFilters; danExplicit: boolean 
       from,
       to: gacha && DATE_RE.test(gacha) ? gacha : undefined,
       obl,
-      // Tuman faqat hudud bilan birga ma'noli.
       area: obl !== undefined ? int(one(sp.tuman)) : undefined,
     },
     danExplicit,
   };
 }
 
-/**
- * Filtrni havola parametrlariga aylantiradi. `dan` HAR DOIM beriladi (bo'sh bo'lsa
- * ham) — shunda havola bosilganda standart sana jimgina qo'shilib, son o'zgarib
- * qolmaydi (jadvaldagi son = ro'yxatdagi son).
- */
 export function filterParams(f: PaymentFilters): Record<string, string | number | undefined> {
   return { dan: f.from ?? "", gacha: f.to, hudud: f.obl, tuman: f.area };
 }
 
-/** Yo'l + parametrlar. `undefined`/`null` tashlanadi, bo'sh satr SAQLANADI (`dan=`). */
 export function href(path: string, params: Record<string, string | number | undefined | null>): string {
   const u = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {

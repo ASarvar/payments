@@ -21,7 +21,7 @@ import { Pager, TaqsimotNav } from "../parts";
 const PATH = "/dashboard/taqsimot/muammoli";
 
 export default async function ProblemsPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect(); // faqat adminlar
+  await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
       <>
@@ -35,7 +35,6 @@ export default async function ProblemsPage({ searchParams }: { searchParams: Pro
   const turRaw = one(sp.tur);
   const kind: ProblemKind = isProblemKind(turRaw) ? turRaw : "taqsimlanmagan";
   const meta = PROBLEM_KINDS.find((k) => k.key === kind) ?? PROBLEM_KINDS[0];
-  // Standart sana (`DEFAULT_FROM`) — boshqa sahifalardagi bilan bir xil; bu yerda HUJJAT sanasi bo'yicha.
   const { f, danExplicit } = parseFilters(sp);
   const page = Math.max(1, Number(one(sp.p)) || 1);
 

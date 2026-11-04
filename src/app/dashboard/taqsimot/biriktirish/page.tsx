@@ -15,11 +15,10 @@ import { TaqsimotNav } from "../parts";
 
 const PATH = "/dashboard/taqsimot/biriktirish";
 
-/** Ko'rsatishda 0,0 ga yaxlitlanadigan farq — rang berilmaydi. */
 const isZero = (n: number) => Math.abs(n) < 50_000;
 
 export default async function BiriktirishPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect(); // faqat adminlar
+  await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
       <>
@@ -32,7 +31,6 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
   const sp = await searchParams;
   const { f, danExplicit } = parseFilters(sp);
   const from = f.from;
-  // `gacha` berilmasa — bugun: "bir kunda" ustunlari shu kun uchun.
   const to = f.to ?? todayTashkent();
 
   let rows: BirRow[] | null = null;
@@ -49,7 +47,6 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
   }
   const total = rows ? totalBir(rows) : null;
   const period = `${from ? dmy(from) : "boshidan"} — ${dmy(to)}`;
-  // Pastki bosqichlarga havolalar — `dan` HAR DOIM beriladi (standart sana jimgina qo'shilmasin).
   const q = { dan: from ?? "", gacha: to };
   const hududHref = (obl: number) => href(`${PATH}/hudud`, { hudud: obl, ...q });
   const docsHref = (obl: number, extra: Record<string, string> = {}) => href(`${PATH}/hujjatlar`, { hudud: obl, ...q, ...extra });

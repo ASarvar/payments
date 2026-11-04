@@ -262,5 +262,6 @@ mustaqil hisoblangani bilan bir xilmi, kim nimani ko'radi. Har to'plam — alohi
 
 - Commit/push faqat foydalanuvchi aytganda. Versiya (`package.json`) va `CHANGELOG.md` — push paytida.
 - `next build` ni `next dev` ishlab turganda shu papkada ishlatmang (`.next` buziladi).
-- Kodda IZOH yozilmaydi (foydalanuvchi talabi, 2026-11-05) — bilim shu faylda va `DEPLOY.md` da.
+- Kodda IZOH yozilmaydi (foydalanuvchi talabi, 2026-11-05) — bilim shu faylda, `KOD-ESLATMALARI.md`
+  (fayl bo'yicha nozik joylar) va `DEPLOY.md` da.
 - UI matnlari — o'zbek tilida.

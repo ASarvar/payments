@@ -6,8 +6,6 @@ import { isoDate, str, toNum, type Row } from "@/server/services/sqlUtil";
 import { ITEMS_ARR, PAID } from "@/server/services/uzasboSql";
 import { SINGLE_ITEM_RT, strList } from "./shared";
 
-/** Ikki marta to'langan ulushlar — FAQAT balansda saqlovchi (`SINGLE_ITEM_RT`). */
-
 export interface DoublePaid {
   itemId: string;
   payId: string | null;
@@ -15,24 +13,15 @@ export interface DoublePaid {
   region: string | null;
   contractNumber: string | null;
   ownerName: string | null;
-  /** Necha marta to'langan (≥ 2). */
   times: number;
   sends: string[];
-  /** Topshiriqnomalar summalari yig'indisi (to'langan jami). */
   paidTotal: number;
-  /** Qismning balansda saqlovchi ulushi. */
   share: number;
-  /** Ortiqcha to'langan: to'langan jami − ulush. */
   extra: number;
 }
 
 const DOUBLE_LIMIT = 5000;
 
-/**
- * Balansda saqlovchi ulushi g'aznachilikda 2+ marta TO'LANGAN qismlar. Faqat rt 4 — boshqa
- * turlarda ro'yxat to'planadi va takror ikki marta to'lash degani emas (`SINGLE_ITEM_RT`).
- * Serverda 58 ta (2026-09-15). Kesh 1 soat.
- */
 async function computeDoublePaid(): Promise<{ rows: DoublePaid[]; truncated: boolean }> {
   const rows = await readOnly((tx) =>
     tx.$queryRaw<Row[]>(Prisma.sql`

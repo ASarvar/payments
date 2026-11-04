@@ -5,25 +5,6 @@ import { readOnly } from "@/lib/projectDb";
 import { PAYMENTS_CACHE_TAG, getRegions } from "@/server/services/payments";
 import { toNum, type Row } from "@/server/services/sqlUtil";
 
-/**
- * "SHARTNOMALAR BO'YICHA" — yil bo'yicha hisoblangan ijara/penya, to'langan va qarzdorlik, hududlar
- * kesimida. Mavjud tizim (online-ijara.uz) hisobotining AYNAN o'sha ta'rifi (foydalanuvchi SQL'i,
- * 2026-09-15). Bu bo'limning BARCHA SQL'i shu yerda.
- *
- *   shartnomalar = vw_contracts (state = 1, doc_status = 3, doc_year = yil, type IN (1, 2)): soni, asum
- *   qarzdorlik   = o'sha shartnomalar: debitor = |saldo| (saldo < 0), ijara/penya — |rent|, |penya|
- *                  (har biri o'z manfiyligi bo'yicha); kreditor = saldo (saldo > 0)
- *   hisoblandi   = billing (state = 1, ayear = yil): ijara = credit_sum, penya = penya, jami = ikkalasi
- *   to'landi     = payment_items (state = 1, ayear = yil, pay_type 1 = ijara, 2 = penya);
- *                  "bir kunda" — BUGUN (asl so'rovdagidek, yil tanlovidan qat'i nazar)
- *
- * ⚠️ `vw_contracts` — `vw_all_contracts` EMAS, boshqa ko'rinish.
- * ⚠️ `vw_contracts.doc_year` va `billing.ayear` tipi tasdiqlanmagan — MATN sifatida solishtiriladi
- *    (int ham, varchar ham ishlaydi). `payment_items.ayear` — integer (\d bilan tasdiqlangan).
- * ⚠️ Asl kabi faqat `lists` hududlari (id > 0).
- */
-
-/** Yil tanlovidagi eng birinchi yil (to'lov ma'lumoti 2023-08 dan). */
 export const FIRST_YEAR = 2023;
 
 export interface ShTriple {
@@ -35,13 +16,10 @@ export interface ShTriple {
 export interface ShRow {
   id: number | null;
   name: string;
-  /** Shartnomalar soni va summasi. */
   count: number;
   sum: number;
   hisob: ShTriple;
-  /** To'langan — bugun. */
   day: ShTriple;
-  /** To'langan — yil davomida. */
   paid: ShTriple;
   debitor: ShTriple;
   creditor: number;
@@ -109,7 +87,6 @@ async function computeShartnomalar(year: number, today: string): Promise<ShRow[]
 export const getShartnomalar = (year: number, today: string) =>
   unstable_cache(computeShartnomalar, ["sh-v1"], { revalidate: env.CACHE_SECONDS, tags: [PAYMENTS_CACHE_TAG] })(year, today);
 
-/** JAMI qatori. */
 export function totalSh(rows: ShRow[]): ShRow {
   const add = (a: ShTriple, b: ShTriple): ShTriple => ({ jami: a.jami + b.jami, rent: a.rent + b.rent, penya: a.penya + b.penya });
   const t: ShRow = { id: null, name: "J A M I", count: 0, sum: 0, hisob: zero3(), day: zero3(), paid: zero3(), debitor: zero3(), creditor: 0 };

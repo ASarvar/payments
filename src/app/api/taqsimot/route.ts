@@ -9,13 +9,6 @@ import { getDistribution } from "@/server/services/taqsimot";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Bitta to'lov hujjati taqsimoti — Excel (4 varaq: hujjat, kanallar, qismlar, topshiriqnomalar).
- * Sahifa bilan AYNAN bir xil ma'lumot (`getDistribution`).
- * ⚠️ Hozircha faqat adminlar (foydalanuvchi qarori, 2026-09-15) — `getCurrentUser()` moderatorni
- * ham o'tkazadi, shuning uchun tekshiruv shu yerda.
- * ⚠️ To'lovchi va BS ma'lumotlari bor — har eksport auditga yoziladi.
- */
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return new Response("Avtorizatsiya talab qilinadi", { status: 401 });
@@ -50,7 +43,6 @@ export async function GET(req: Request) {
     r.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF7F1E4" } };
   };
 
-  // 1. Hujjat
   const { doc } = d;
   const s1 = wb.addWorksheet("Hujjat");
   s1.columns = [{ width: 32 }, { width: 100, style: { alignment: { wrapText: true, vertical: "top" } } }];
@@ -79,7 +71,6 @@ export async function GET(req: Request) {
     r.getCell(2).alignment = { horizontal: "left", wrapText: true, vertical: "top" };
   }
 
-  // 2. Kanallar
   const s2 = wb.addWorksheet("Kanallar");
   s2.columns = [
     { header: "Kanal", width: 20 },
@@ -100,7 +91,6 @@ export async function GET(req: Request) {
     s2.addRow([c.label, c.share, c.accepted, c.included, c.paid, Math.max(0, c.share - c.paid), c.lastPaid ? dmy(c.lastPaid) : null, c.extraPaid || null, c.noSend || null]);
   }
 
-  // 3. Qismlar — har kanal ulushi alohida ustunda, holati matnda.
   const s3 = wb.addWorksheet("Qismlar");
   s3.columns = [
     { header: "Biriktirish ID", width: 14 },
@@ -134,7 +124,6 @@ export async function GET(req: Request) {
     ]);
   }
 
-  // 4. Topshiriqnomalar
   const s4 = wb.addWorksheet("Topshiriqnomalar");
   s4.columns = [
     { header: "ID", width: 10 },

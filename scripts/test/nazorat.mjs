@@ -1,9 +1,7 @@
-// Nazorat paneli: kanallar matritsasi, pul yo'li bosqichlari, svetofor va dinamika bazaga mos kelishi.
 import { CHANNELS, DEFAULT_FROM, PAID, PAID_CTE, cookieFor, get, mln, norm, paidBit, ro, rowCells, sum, today, unesc } from "./_lib.mjs";
 
 export const NAME = "Nazorat paneli";
 
-/** Davr bo'yicha 12 kanal x holatlar (ilovadagi ta'rif bilan bir xil). */
 async function channelAgg(extra = "") {
   const [row] = await ro(`WITH ${PAID_CTE}
     SELECT ${CHANNELS.map(([k, S, A, T, rt]) => `

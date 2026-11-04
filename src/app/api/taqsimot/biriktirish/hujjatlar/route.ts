@@ -19,11 +19,6 @@ import {
 
 export const dynamic = "force-dynamic";
 
-/**
- * Biriktirish — bitta hudud hujjatlari, Excel. Sahifa bilan AYNAN bir xil filtr (`BirDocSel`), so'mda,
- * JAMI qatori birinchi, hujjatlar sana bo'yicha o'sib (eski tizimdagidek).
- * ⚠️ Hozircha faqat adminlar. To'lovchi ma'lumoti bor — har eksport auditda.
- */
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return new Response("Avtorizatsiya talab qilinadi", { status: 401 });

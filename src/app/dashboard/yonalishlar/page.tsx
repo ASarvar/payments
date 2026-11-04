@@ -13,13 +13,8 @@ import { FilterBar } from "@/components/FilterBar";
 import { ExcelLink } from "@/components/ExcelLink";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, totalStyle } from "@/components/ui";
 
-/**
- * YO'NALISHLAR BO'YICHA SVOD: pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan.
- * Ikki jadval — yo'nalishlar (bosqichlar bilan) va yo'nalish × hudud (chiqishi kerak).
- * ⚠️ Tuman kesimi yo'q: manba — hudud × kanal hisobi (nazorat paneli bilan umumiy, keshlangan).
- */
 export default async function YonalishlarPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect(); // faqat adminlar
+  await requireUserOrRedirect();
   if (!projectConfigured()) {
     return (
       <>
@@ -31,7 +26,6 @@ export default async function YonalishlarPage({ searchParams }: { searchParams: 
 
   const sp = await searchParams;
   const parsed = parseFilters(sp);
-  // Tuman tashlanadi — `payment_items` hudud × kanal hisobida tuman yo'q.
   const f: PaymentFilters = { from: parsed.f.from, to: parsed.f.to, obl: parsed.f.obl };
   const badDates = Boolean(f.from && f.to && f.from > f.to);
 

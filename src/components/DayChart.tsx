@@ -1,11 +1,6 @@
 import { dmy, mln, nf } from "@/lib/format";
 import type { DayPoint } from "@/server/services/nazorat";
 
-/**
- * Kunlik dinamika grafigi — SERVERDA chiziladigan SVG (kutubxonasiz, JS'siz). Ustun ustiga kelinsa
- * (`<title>`) o'sha kun raqamlari chiqadi. ⚠️ Faqat server komponentda (`nf` — `lib/format.ts`).
- */
-
 const W = 760;
 const H = 240;
 const PAD = { l: 50, r: 10, t: 12, b: 28 };
@@ -15,7 +10,6 @@ export const SERIES = {
   tolangan: { label: "G'aznachilik to'lagan", color: "#15803d" },
 } as const;
 
-/** 1 · 2 · 2,5 · 5 · 10 × 10ⁿ — o'qda "yumaloq" chegara. */
 function niceMax(v: number): number {
   if (v <= 0) return 1;
   const e = 10 ** Math.floor(Math.log10(v));
@@ -64,7 +58,6 @@ export function DayChart({ points }: { points: DayPoint[] }) {
             <title>
               {`${dmy(p.d)}\nTushum: ${mln(p.tushum)} mln\nBiriktirilgan: ${mln(p.biriktirilgan)} mln\nG'aznachilik to'lagan: ${mln(p.tolangan)} mln`}
             </title>
-            {/* Butun ustun — sichqoncha uchun nishon (izoh har joyda chiqsin). */}
             <rect x={PAD.l + step * i} y={PAD.t} width={step} height={plotH} fill="transparent" />
             <rect x={x0} y={y(p.tushum)} width={bw} height={Math.max(0, PAD.t + plotH - y(p.tushum))} fill={SERIES.tushum.color} rx={1} />
             <rect

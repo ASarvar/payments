@@ -17,11 +17,9 @@ export default async function LoginPage({
       await signIn("credentials", {
         username: formData.get("username"),
         password: formData.get("password"),
-        // Auth.js core `redirectTo` ni mutlaq URL qiladi — basePath'ni qo'lda qo'shamiz.
         redirectTo: withBase("/dashboard"),
       });
     } catch (err) {
-      // Login xatosi => login sahifasiga qaytamiz. Redirect (muvaffaqiyat) uzatiladi.
       if (err instanceof AuthError) redirect("/login?error=1");
       throw err;
     }

@@ -14,13 +14,11 @@ const APP_VERSION = packageJson.version;
 
 interface NavItem {
   href: string;
-  /** Faollikni aniqlash uchun prefiks (`href` dan farq qilishi mumkin). */
   match: string;
   label: string;
   icon: LucideIcon;
   exact?: boolean;
   superOnly?: boolean;
-  /** Hudud moderatoriga ko'rinmaydi (u faqat ro'yxatni ko'radi). */
   adminOnly?: boolean;
 }
 
@@ -29,10 +27,8 @@ const NAV: NavItem[] = [
   { href: "/dashboard/kanal/vat", match: "/dashboard/kanal", label: "Kanallar", icon: Layers, adminOnly: true },
   { href: "/dashboard/yonalishlar", match: "/dashboard/yonalishlar", label: "Yo'nalishlar", icon: ArrowRightLeft, adminOnly: true },
   { href: "/dashboard/royxat", match: "/dashboard/royxat", label: "To'lovlar ro'yxati", icon: List },
-  // Hozircha faqat adminlar (foydalanuvchi qarori, 2026-09-15).
   { href: "/dashboard/taqsimot", match: "/dashboard/taqsimot", label: "Taqsimot", icon: Split, adminOnly: true },
   { href: "/dashboard/shartnomalar", match: "/dashboard/shartnomalar", label: "Shartnomalar", icon: FileText, adminOnly: true },
-  // ⚠️ Yagona yozuv amali (`payment_items.state = 0`) — faqat adminlar (foydalanuvchi qarori, 2026-11-04).
   { href: "/dashboard/pul-biriktirish", match: "/dashboard/pul-biriktirish", label: "Pul biriktirish", icon: Link2Off, adminOnly: true },
   { href: "/dashboard/users", match: "/dashboard/users", label: "Foydalanuvchilar", icon: Users, superOnly: true },
   { href: "/dashboard/audit", match: "/dashboard/audit", label: "Audit", icon: ScrollText, superOnly: true },
@@ -52,7 +48,6 @@ export function Sidebar({
   isModerator,
 }: {
   user: { name: string; username: string; roleLabel: string };
-  /** ⚠️ Ikkalasi faqat menyu ko'rinishi uchun — haqiqiy himoya sahifaning o'zida (`lib/authz.ts`). */
   isSuperAdmin: boolean;
   isModerator: boolean;
 }) {

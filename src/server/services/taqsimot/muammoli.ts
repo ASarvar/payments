@@ -5,8 +5,6 @@ import { PAGE_SIZE, type Metric, type PaymentFilters } from "@/server/services/p
 import { isoDate, str, toNum, type Row } from "@/server/services/sqlUtil";
 import { cacheOpts, whereSql } from "./shared";
 
-/** Muammoli hujjatlar: taqsimlanmagan / qisman / ortiqcha taqsimlangan. */
-
 export const PROBLEM_KINDS = [
   {
     key: "taqsimlanmagan",
@@ -39,7 +37,6 @@ const KIND_COND: Record<ProblemKind, Prisma.Sql> = {
   ortiqcha: Prisma.sql`t.s > d.asum`,
 };
 
-/** Filtr hujjat sanasi (`paydocs.doc_date`) va hududi bo'yicha; faqat faol kirimlar. */
 function docConds(f: PaymentFilters): Prisma.Sql[] {
   const c: Prisma.Sql[] = [Prisma.sql`p.state = 1`];
   if (f.from) c.push(Prisma.sql`p.doc_date >= ${f.from}::date`);
@@ -49,11 +46,6 @@ function docConds(f: PaymentFilters): Prisma.Sql[] {
   return c;
 }
 
-/**
- * `d` — filtrdagi hujjatlar, `t` — ularning faol qismlari yig'indisi.
- * ⚠️ `pay_id` da indeks yo'q: `t` bitta hash-agregat (butun jadval skani), hujjat
- * boshiga LATERAL emas — u yuz minglab skanga aylanardi.
- */
 function problemCtes(f: PaymentFilters): Prisma.Sql {
   return Prisma.sql`
     WITH d AS (
@@ -69,7 +61,6 @@ function problemCtes(f: PaymentFilters): Prisma.Sql {
 
 export interface ProblemSummary {
   docs: Metric;
-  /** `s`: taqsimlanmagan — hujjat summasi, qisman — qoldiq, ortiqcha — ortiqcha qism. */
   kinds: Record<ProblemKind, Metric>;
 }
 

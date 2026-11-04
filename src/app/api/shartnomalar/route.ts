@@ -7,11 +7,6 @@ import { FIRST_YEAR, getShartnomalar, totalSh, type ShRow } from "@/server/servi
 
 export const dynamic = "force-dynamic";
 
-/**
- * "Shartnomalar bo'yicha" — Excel, sahifa bilan AYNAN bir xil (`getShartnomalar`), mln so'mda,
- * ikki qavatli sarlavha, JAMI qatori birinchi.
- * ⚠️ Hozircha faqat adminlar — `getCurrentUser()` moderatorni ham o'tkazadi, tekshiruv shu yerda.
- */
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return new Response("Avtorizatsiya talab qilinadi", { status: 401 });

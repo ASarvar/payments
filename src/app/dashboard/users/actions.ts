@@ -10,7 +10,6 @@ import { audit } from "@/lib/audit";
 import { ROLE_ORDER } from "@/lib/roles";
 import { getRegions } from "@/server/services/payments";
 
-/** Yangi foydalanuvchi formasiga xato bilan qaytariladigan qiymatlar (PAROLSIZ). */
 export type CreateValues = { username: string; fullName: string; role: Role; regionId: number | null };
 export type ActionState = { ok?: string; error?: string; values?: CreateValues } | null;
 
@@ -32,18 +31,11 @@ function fail(e: unknown): ActionState {
   return { error: e instanceof Error ? e.message : "Kutilmagan xato" };
 }
 
-/** Formadagi hudud id — butun son bo'lmasa `null`. */
 function regionOf(raw: FormDataEntryValue | null): number | null {
   const s = typeof raw === "string" ? raw.trim() : "";
   return /^\d{1,9}$/.test(s) ? Number(s) : null;
 }
 
-/**
- * Moderator hududi: faqat MODERATOR uchun va MAJBURIY; boshqa rollarda `null`.
- * ⚠️ FK yo'q (hududlar `project` bazasida) — YANGI id o'sha yerdagi haqiqiy ro'yxatdan
- * tekshiriladi. O'zgarmagan hudud (`current`) tekshirilmaydi: `project` ishlamay qolganda
- * ham moderatorni bloklash yoki boshqa maydonini saqlash mumkin bo'lsin.
- */
 async function resolveRegion(
   role: Role,
   raw: FormDataEntryValue | null,
@@ -64,7 +56,6 @@ async function resolveRegion(
 }
 
 export async function createUserAction(_: ActionState, fd: FormData): Promise<ActionState> {
-  // ⚠️ React forma amalidan keyin maydonlarni tozalaydi — xato bo'lsa kiritilgani qaytariladi.
   const values: CreateValues = {
     username: String(fd.get("username") ?? ""),
     fullName: String(fd.get("fullName") ?? ""),
@@ -108,7 +99,6 @@ export async function resetPasswordAction(_: ActionState, fd: FormData): Promise
 
     const u = await prisma.user.update({
       where: { id: userId },
-      // ⚠️ `sessionVersion` oshadi — o'sha foydalanuvchining BARCHA faol sessiyalari bekor.
       data: { passwordHash: await bcrypt.hash(p.data, 10), sessionVersion: { increment: 1 } },
     });
     await audit(actor.id, "RESET_PASSWORD", { username: u.username });
@@ -126,7 +116,6 @@ export async function updateUserAction(_: ActionState, fd: FormData): Promise<Ac
     const role = ROLE.parse(fd.get("role"));
     const isActive = fd.get("isActive") === "on";
 
-    // O'zini bloklab qo'yishning oldini olish.
     if (userId === actor.id && (role !== "SUPER_ADMIN" || !isActive)) {
       return { error: "O'z rolingizni pasaytira yoki o'zingizni bloklay olmaysiz" };
     }
@@ -142,7 +131,6 @@ export async function updateUserAction(_: ActionState, fd: FormData): Promise<Ac
     const region = await resolveRegion(role, fd.get("regionId"), target.regionId);
     if ("error" in region) return { error: region.error };
 
-    // Rol va hudud har so'rovda bazadan o'qiladi (`getCurrentUser`) — sessiyani bekor qilish shart emas.
     await prisma.user.update({ where: { id: userId }, data: { role, isActive, regionId: region.regionId } });
     await audit(actor.id, "UPDATE_USER", { username: target.username, role, isActive, regionId: region.regionId });
     revalidatePath("/dashboard/users");

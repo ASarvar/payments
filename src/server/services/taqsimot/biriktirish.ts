@@ -6,21 +6,6 @@ import { PAGE_SIZE, getRegions, type PaymentFilters } from "@/server/services/pa
 import { isoDate, str, toNum, type Row } from "@/server/services/sqlUtil";
 import { cacheOpts, whereSql } from "./shared";
 
-/** "Biriktirish borishi": respublika → hudud → hujjatlar (mavjud tizim hisobotining ta'rifi). */
-
-/**
- * "Ijara to'lovlaridan tushgan mablag'lar biriktirilishining borishi" — mavjud tizim (online-ijara.uz)
- * hisobotining AYNAN o'sha ta'rifi (foydalanuvchi bergan SQL, 2026-09-15; jamilari serverda
- * eski so'rov bilan tiyinigacha solishtirildi):
- *   tushum        = paydocs.asum                   (state = 1, doc_date davrda, hujjat hududi)
- *   biriktirilgan = payments.parsing_sum           (state = 1, doc_date davrda)
- *                 + munis_receive_payment.real_sum (state = 1, status > NEW, created_at davrda)
- *   shundan       = payments.*_sum turlari — MUNIS qismi turlarga bo'linmaydi (alohida ustun).
- * Asl so'rovdan ATAYLAB farqi: "bir kunda" — `gacha` kuni (aslida MUNIS qismi `current_date` bo'yicha
- * edi) va tushum = biriktirilgan + biriktirilmagan har doim bajariladi; asl so'rovdagi ishlatilmagan
- * `payment_items` LATERAL'i olib tashlangan; `created_at` indeks ishlaydigan ko'rinishda.
- * ⚠️ `payments` da tuman yo'q — faqat hududlar. Asl kabi faqat `lists` hududlari (id > 0).
- */
 export const BIR_TYPES = [
   { key: "rent", col: "rent_sum", label: "Ijara" },
   { key: "penya", col: "penya_sum", label: "Penya" },
@@ -38,16 +23,13 @@ export type BirType = (typeof BIR_TYPES)[number]["key"];
 export interface BirAmounts {
   tushum: number;
   biriktirilgan: number;
-  /** tushum − biriktirilgan (manfiy — ortiqcha biriktirilgan). */
   farq: number;
 }
 
 export interface BirRow extends BirAmounts {
   id: number | null;
   name: string;
-  /** `gacha` kuni. */
   day: BirAmounts;
-  /** Biriktirilganning MUNIS orqali qismi. */
   munis: number;
   types: Record<BirType, number>;
 }
@@ -72,15 +54,9 @@ function birRow(id: number | null, name: string, r: Row): BirRow {
   };
 }
 
-/** `payments` turlari yig'indisi (ustun nomlari — `BIR_TYPES` dan, whitelist). */
 const BIR_TYPE_SUMS = Prisma.raw(BIR_TYPES.map((t) => `sum(${t.col}) AS "${t.key}"`).join(", "));
 
-/**
- * `from` bo'lmasa — boshlanish chegarasiz; `obl` — faqat shu hudud (hudud sahifasi). Sanalar
- * YYYY-MM-DD, ikkalasi ham QO'SHIB.
- */
 async function computeBiriktirish(from: string | undefined, to: string, obl?: number): Promise<BirRow[]> {
-  // Uchala manbaga bir xil: boshlanish sanasi va (berilsa) hudud.
   const scope = (col: string) =>
     Prisma.sql`${from ? Prisma.sql`AND ${Prisma.raw(col)} >= ${from}::date` : Prisma.empty}
                ${obl !== undefined ? Prisma.sql`AND obl_id = ${obl}::int` : Prisma.empty}`;
@@ -125,11 +101,6 @@ export interface BirPeriod {
   to: string;
 }
 
-/**
- * Hudud sahifasidagi qatorlar (eski tizimdagidek): hisobot davri, joriy oy, kecha, bugun — hammasi
- * `gacha` ga nisbatan. `gacha` bugun bo'lmasa "kecha/bugun" o'rniga "oldingi/oxirgi kun".
- * ⚠️ Qatorlar KESISHADI — JAMI qatori ma'nosiz (eski tizimdagi jami ularni qo'shib yuborardi).
- */
 export function birPeriods(from: string | undefined, to: string, today: string): BirPeriod[] {
   const prev = shiftDate(to, -1);
   const isToday = to === today;
@@ -141,14 +112,6 @@ export function birPeriods(from: string | undefined, to: string, today: string):
   ];
 }
 
-// ── Biriktirish: bitta hudud hujjatlari ─────────────────────────────────────
-
-/**
- * Hudud to'lov hujjatlari va har biriga biriktirilgani: `payments` + MUNIS — ikkalasi `pay_id` orqali.
- * ⚠️ Hudud jadvali `payments` ni O'Z sanasi/hududi, MUNIS ni `created_at` bo'yicha oladi, bu yerda esa
- * hujjatga `pay_id` orqali — ikkalasi bog'lanish to'liq bo'lgandagina teng.
- * ⚠️ `payments.pay_id` da alohida indeks yo'q — `pa` bitta hash-agregat (hujjat boshiga LATERAL emas).
- */
 export const BIR_DOC_HOLATLAR = [
   { key: "hammasi", label: "Hammasi" },
   { key: "biriktirilmagan", label: "Biriktirilmagan qoldig'i bor" },
@@ -160,7 +123,6 @@ export type BirDocHolat = (typeof BIR_DOC_HOLATLAR)[number]["key"];
 export const isBirDocHolat = (v: string | undefined): v is BirDocHolat => BIR_DOC_HOLATLAR.some((h) => h.key === v);
 export const isBirType = (v: string | undefined): v is BirType => BIR_TYPES.some((t) => t.key === v);
 
-/** Tiyinlik yaxlitlash farqi "biriktirilmagan" deb sanalmasin. */
 const DOC_HOLAT_COND: Record<BirDocHolat, Prisma.Sql | null> = {
   hammasi: null,
   biriktirilmagan: Prisma.sql`x.asum - x.bir > 0.005`,
@@ -215,7 +177,7 @@ function birDocQuery(sel: BirDocSel): { cte: Prisma.Sql; where: Prisma.Sql } {
   const conds: Prisma.Sql[] = [Prisma.sql`true`];
   const h = DOC_HOLAT_COND[sel.holat];
   if (h) conds.push(h);
-  if (sel.tur) conds.push(Prisma.raw(`x."${sel.tur}" > 0`)); // `tur` — BIR_TYPES kaliti (isBirType)
+  if (sel.tur) conds.push(Prisma.raw(`x."${sel.tur}" > 0`));
   return { cte, where: whereSql(conds) };
 }
 
@@ -271,7 +233,6 @@ async function computeBirDocPage(sel: BirDocSel, page: number): Promise<BirDoc[]
   return rows.map(birDocRow);
 }
 
-/** Excel uchun — barcha mos hujjatlar, sana bo'yicha O'SIB (eski tizimdagidek), keshsiz. */
 export async function listBirDocs(sel: BirDocSel, limit: number): Promise<BirDoc[]> {
   const { cte, where } = birDocQuery(sel);
   const rows = await readOnly((tx) =>
@@ -286,7 +247,6 @@ export async function listBirDocs(sel: BirDocSel, limit: number): Promise<BirDoc
 export const getBirDocPage = (sel: BirDocSel, page: number) =>
   unstable_cache(computeBirDocPage, ["taq-bir-docs-page-v1"], cacheOpts())(sel, page);
 
-/** JAMI qatori. */
 export function totalBir(rows: BirRow[]): BirRow {
   const add = (a: BirAmounts, b: BirAmounts): BirAmounts => ({
     tushum: a.tushum + b.tushum,

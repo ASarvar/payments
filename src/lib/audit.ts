@@ -1,11 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-/**
- * Audit yozuvi. ⚠️ Xatosi asosiy amalni TO'XTATMAYDI (logga yoziladi) — audit
- * bazasi vaqtincha yetib bo'lmasa, foydalanuvchi baribir ishlay olsin.
- * ⚠️ `details` ga parol, to'liq hisob raqami kabi sirlarni yozmang.
- */
 export async function audit(userId: string | null, action: string, details?: Prisma.InputJsonValue): Promise<void> {
   try {
     await prisma.auditLog.create({ data: { userId, action, details } });

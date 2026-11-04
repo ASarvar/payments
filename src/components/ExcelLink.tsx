@@ -1,10 +1,6 @@
 import { FileDown } from "lucide-react";
 import { withBase } from "@/lib/basePath";
 
-/**
- * Excel yuklash tugmasi. ⚠️ Oddiy `<a>` (fayl yuklash, Link emas) — basePath QO'LDA (`withBase`).
- * `href` — basePath'siz yo'l (`/api/...`).
- */
 export function ExcelLink({ href }: { href: string }) {
   return (
     <a

@@ -166,6 +166,8 @@ Pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan (`server/services/y
   BO'LMASLIGI; qism `state = 1` bo'lishi. Mos kelsa — `state = 0`, `updated_at = localtimestamp`.
 - ⚠️ Shart UPDATE ning `WHERE` ichida ham takrorlanadi (oraliqda belgi qo'yilsa — 0 qator o'zgaradi),
   sabab esa keyin qayta o'qib aniqlanadi.
+- ⚠️ Yozuv roliga `audit_log` ga INSERT va `audit_log_id_seq` ga USAGE ham SHART (trigger chaquruvchi
+  rol nomidan yozadi) — DEPLOY.md §7; bo'lmasa "permission denied for table audit_log".
 - ⚠️ Jadvalda `trg_check_payment_items_limit` (BEFORE UPDATE) va `trg_audit` triggerlari bor:
   birinchisi amalni rad etishi mumkin (xato foydalanuvchiga ko'rsatiladi), ikkinchisi o'zgarishni
   o'sha tizim auditiga yozadi. Bizda ham har urinish auditda (`CANCEL_ATTACHMENT[_FAILED]`).
@@ -260,4 +262,5 @@ mustaqil hisoblangani bilan bir xilmi, kim nimani ko'radi. Har to'plam — alohi
 
 - Commit/push faqat foydalanuvchi aytganda. Versiya (`package.json`) va `CHANGELOG.md` — push paytida.
 - `next build` ni `next dev` ishlab turganda shu papkada ishlatmang (`.next` buziladi).
-- Izohlar va UI — o'zbek tilida.
+- Kodda IZOH yozilmaydi (foydalanuvchi talabi, 2026-11-05) — bilim shu faylda va `DEPLOY.md` da.
+- UI matnlari — o'zbek tilida.

@@ -127,8 +127,18 @@ GRANT CONNECT ON DATABASE project TO payments_rw;
 GRANT USAGE ON SCHEMA public TO payments_rw;
 GRANT SELECT ON public.payment_items TO payments_rw;
 GRANT UPDATE (state, updated_at) ON public.payment_items TO payments_rw;
+GRANT INSERT ON public.audit_log TO payments_rw;
+GRANT USAGE ON SEQUENCE public.audit_log_id_seq TO payments_rw;
 ALTER ROLE payments_rw SET statement_timeout = '60s';
 ```
+
+⚠️ `audit_log` ga INSERT SHART: `payment_items` dagi `trg_audit` triggeri (SECURITY DEFINER EMAS)
+har o'zgarishni `audit_log` ga yozadi va bu CHAQIRUVCHI rol nomidan bajariladi. Huquq bo'lmasa
+yangilash butunlay rad etiladi ("permission denied for table audit_log"). Faqat INSERT beriladi —
+rol auditni o'qiy ham, o'zgartira ham olmaydi; `changed_by` da `payments_rw` ko'rinadi.
+⚠️ Ikkinchi trigger (`trg_check_payment_items_limit`) `payments` jadvalini faqat `NEW.state = 1`
+yoki `doc_id` o'zgarganda o'qiydi — biz `state = 0` qilamiz, shuning uchun `payments` ga huquq
+KERAK EMAS.
 
 `pg_hba.conf` ga (§2 dagi qator yonida):
 
@@ -151,7 +161,15 @@ PROJECT_WRITE_DATABASE_URL="postgresql://payments_rw:PAROL@host.docker.internal:
 bizning auditimizda esa kim va qaysi qismni bekor qilgani saqlanadi.
 ⚠️ Tekshirish: huquq FAQAT shu jadvalda ekanini ko'rish uchun
 `psql "postgresql://payments_rw:...@127.0.0.1:5432/project" -c "UPDATE paydocs SET state = state;"`
-RUXSAT YO'Q xatosini berishi kerak.
+RUXSAT YO'Q xatosini berishi kerak. Huquqlar to'liqligini bir so'rovda ko'rish:
+
+```sql
+SELECT has_column_privilege('payments_rw','public.payment_items','state','UPDATE') AS pi_state,
+       has_table_privilege('payments_rw','public.audit_log','INSERT')              AS audit_insert,
+       has_sequence_privilege('payments_rw','public.audit_log_id_seq','USAGE')     AS audit_seq;
+```
+
+Uchalasi ham `t` bo'lishi kerak.
 
 ## Yangilash
 

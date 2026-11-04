@@ -3,28 +3,12 @@ import { CHANNELS } from "@/lib/channels";
 import { readOnly, writeTx } from "@/lib/projectDb";
 import { isoDate, isoTs, str, toNum, type Row } from "@/server/services/sqlUtil";
 
-/**
- * PUL BIRIKTIRISH — biriktirishni (`payment_items` qismini) BEKOR QILISH.
- *
- * ⚠️ Ilovadagi YAGONA yozuv amali: `payment_items.state = 0` (yumshoq o'chirish). Qolgan hamma
- * narsa `readOnly()` da qoladi. Yozuv alohida ulanish orqali (`writeTx` — `PROJECT_WRITE_DATABASE_URL`).
- *
- * Shart (foydalanuvchi qarori, 2026-11-04): summasi > 0 bo'lgan HAR BIR kanalning `sent_*` ustuni
- * `true` BO'LMASLIGI kerak. Ya'ni pul biror topshiriqnomaga kiritilgan bo'lsa — bekor qilib
- * bo'lmaydi. Qism allaqachon bekor qilingan (`state <> 1`) bo'lsa ham rad etiladi.
- * ⚠️ Shart ikki marta tekshiriladi: sahifada ko'rsatish uchun va YANGILASH so'rovining `WHERE`
- * ichida — oraliqda boshqa tizim belgi qo'yib ulgursa, yangilash shunchaki 0 qator o'zgartiradi.
- * ⚠️ Jadvalda `trg_audit` (o'sha tizim auditi) va `trg_check_payment_items_limit` (BEFORE UPDATE)
- * triggerlari bor — ikkinchisi yangilashni rad etishi mumkin, xato foydalanuvchiga ko'rsatiladi.
- */
-
 export interface ShareRow {
   key: string;
   label: string;
   sum: number;
   accepted: boolean | null;
   sent: boolean | null;
-  /** Shu kanal bekor qilishga to'sqinlik qilyaptimi (summasi > 0 va `sent_*` true). */
   blocker: boolean;
 }
 
@@ -44,18 +28,15 @@ export interface CancelTarget {
   contractActive: boolean;
   ownerName: string | null;
   ownerTin: string | null;
-  /** Hujjat (`paydocs`) — kontekst uchun. */
   docNum: string | null;
   docPayer: string | null;
   docAsum: number | null;
   shares: ShareRow[];
-  /** Ulushlar yig'indisi (12 kanal). */
   sharesSum: number;
   blockers: string[];
   canCancel: boolean;
 }
 
-/** `sum > 0 AND sent IS TRUE` — kamida bitta kanalda bo'lsa, bekor qilish MUMKIN EMAS. */
 const BLOCKED = Prisma.raw(
   CHANNELS.map((c) => `(pi.${c.sum} > 0 AND pi.${c.sent} IS TRUE)`).join(" OR "),
 );
@@ -100,7 +81,6 @@ function toTarget(r: Row): CancelTarget {
   };
 }
 
-/** Qismni ID bo'yicha topadi (faqat o'qish). `null` — bunday qism yo'q. */
 export async function findItem(id: string): Promise<CancelTarget | null> {
   const rows = await readOnly((tx) =>
     tx.$queryRaw<Row[]>(Prisma.sql`
@@ -128,10 +108,12 @@ export type CancelResult =
   | { ok: true; id: string }
   | { ok: false; sabab: string };
 
-/**
- * Biriktirishni bekor qiladi: `state = 0`, `updated_at` yangilanadi.
- * Shart `WHERE` ichida — qoida buzilgan bo'lsa hech narsa o'zgarmaydi va sabab qaytariladi.
- */
+function dbMessage(msg: string): string {
+  const m = msg.match(/Message:\s*`([^`]+)`/) ?? msg.match(/(ERROR:[^\n]+)/);
+  const text = (m?.[1] ?? msg.split("\n").map((l) => l.trim()).filter(Boolean).pop() ?? "").trim();
+  return text.replace(/^ERROR:\s*/, "").slice(0, 300);
+}
+
 export async function cancelAttachment(id: string): Promise<CancelResult> {
   if (!/^\d{1,18}$/.test(id)) return { ok: false, sabab: "ID faqat raqamlardan iborat bo'lishi kerak." };
 
@@ -148,15 +130,13 @@ export async function cancelAttachment(id: string): Promise<CancelResult> {
     console.error("[pul-biriktirish]", e);
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes("PROJECT_WRITE_DATABASE_URL")) return { ok: false, sabab: "Bekor qilish sozlanmagan (yozuv ulanishi yo'q)." };
-    if (/permission denied/i.test(msg)) return { ok: false, sabab: "Bazada ruxsat yo'q — yozuv roliga UPDATE huquqi berilmagan." };
-    // `trg_check_payment_items_limit` kabi triggerlar o'z xabarini beradi.
-    const first = msg.split("\n").find((l) => /ERROR|error/.test(l)) ?? "";
-    return { ok: false, sabab: `Baza amalni rad etdi${first ? `: ${first.trim().slice(0, 200)}` : "."}` };
+    const detail = dbMessage(msg);
+    if (/permission denied/i.test(msg)) return { ok: false, sabab: `Bazada ruxsat yo'q — ${detail || "yozuv roliga huquq berilmagan"}.` };
+    return { ok: false, sabab: `Baza amalni rad etdi${detail ? `: ${detail}` : "."}` };
   }
 
   if (updated.length > 0) return { ok: true, id: String(updated[0].id) };
 
-  // 0 qator — nega? Joriy holatni o'qib, aniq sabab aytamiz.
   const cur = await findItem(id);
   if (!cur) return { ok: false, sabab: "Bunday biriktirish topilmadi." };
   if (!cur.active) return { ok: false, sabab: `Bu qism allaqachon faol emas (state = ${cur.state}).` };

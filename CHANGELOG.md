@@ -3,6 +3,16 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.9 — 2026-11-05
+
+- **"Pul biriktirish" serverda ishlamayotgani tuzatildi.** Bekor qilishda baza "ruxsat yo'q" deb
+  rad etardi: `payment_items` dagi `trg_audit` triggeri o'zgarishni `audit_log` ga YOZUV ROLI
+  nomidan yozadi, rolda esa unga huquq yo'q edi. DEPLOY.md §7 ga ikki GRANT qo'shildi
+  (`audit_log` ga INSERT, `audit_log_id_seq` ga USAGE) va huquqlarni bir so'rovda tekshirish.
+- Bekor qilish xatosida endi bazaning haqiqiy xabari ko'rsatiladi (avval umumiy matn edi, shu
+  sababli sabab ko'rinmasdi).
+- Kodda izoh yozilmaydi (foydalanuvchi talabi) — qoida `CLAUDE.md` ga kiritildi.
+
 ## 0.3.8 — 2026-11-04
 
 - **Pul biriktirish** (yangi menyu, faqat adminlar). Biriktirish (to'lov qismi) ID si kiritiladi;

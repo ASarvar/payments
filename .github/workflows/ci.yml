@@ -1,0 +1,36 @@
+# Har push va pull request'da: tiplar va to'liq `next build`.
+#
+# ⚠️ HTTP tekshiruvlari (`npm run test:http`) bu yerda ishlamaydi — ular dev server va ikki
+#    baza (`payments` + `project` stub) talab qiladi. Ularni push'dan oldin LOKAL ishga tushiring.
+# ⚠️ Build vaqtida `src/lib/env.ts` (zod) ishga tushadi — Dockerfile'dagi kabi SOXTA qiymatlar.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # ⚠️ `npm ci` — package-lock.json LINUX'da yaratilgan bo'lishi shart (CLAUDE.md).
+      - run: npm ci
+
+      - run: npx prisma generate
+
+      - run: npm run typecheck
+
+      - run: npm run build
+        env:
+          DATABASE_URL: postgresql://build:build@localhost:5432/build
+          NEXTAUTH_SECRET: build-time-only-not-a-real-secret
+          NEXT_TELEMETRY_DISABLED: "1"

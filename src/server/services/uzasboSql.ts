@@ -52,14 +52,6 @@ export function paidCte(rts?: readonly number[]): Prisma.Sql {
     GROUP BY 1)`;
 }
 
-/**
- * Xuddi shu shakldagi `paid` CTE, lekin tayyor to'plamdan (`paidItems.ts`, bitta kanal) — ro'yxat
- * so'rovlarida yoyishni qaytarmaslik uchun. `paidBit(rt)` va `PAID_JOIN` o'zgarishsiz ishlaydi.
- */
-export function paidListCte(ids: string[], rt: number): Prisma.Sql {
-  return Prisma.sql`paid AS (SELECT unnest(${ids}::bigint[]) AS item, ${1 << rt}::int AS mask)`;
-}
-
 export const PAID_JOIN = Prisma.sql`LEFT JOIN paid pd ON pd.item = pi.id`;
 
 /** `paid` ulangan so'rovda: shu kanal (`rt`) ulushi to'langan. `rt` — faqat `CHANNELS` dan. */

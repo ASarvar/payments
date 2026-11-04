@@ -27,6 +27,7 @@ kod intizomida emas, Postgres'da. Yangi so'rov yozsangiz — faqat `readOnly()` 
 ```bash
 npm run dev          # 3001-port (3000 — obyektlar monitoringi)
 npm run typecheck
+npm run test:http    # HTTP tekshiruvlari (dev server 3001 da turgan bo'lsin) — push'dan oldin
 npm run build        # push'dan oldin SHART (tsc yetarli emas — obyektlar 1.14.0 saboq)
 npm run db:seed      # birinchi super admin (SEED_ADMIN_*)
 npm run dev:setup    # dev: lokal bazalar + .env (DEV_PG_URL bilan)
@@ -71,8 +72,9 @@ orasida farq YO'Q (foydalanuvchi qarori) — `IS NOT TRUE`, `= false` emas.
 ⚠️ "O'tkazilgan" ikkiga bo'lingan (foydalanuvchi qarori, 2026-09-15). P — qism shu kanalning to'langan
 topshiriqnomasi ro'yxatida bor (`server/services/uzasboSql.ts`): agregatlarda `paid` CTE (to'langan
 ro'yxatlar yoyilib, qism → `1 << receiver_type` bit-maskasi, `PAID_JOIN` + `paidBit(rt)`); ro'yxat sahifasi va
-eksportda — `server/services/paidItems.ts` (kanalning to'langan qismlari to'plami, XOTIRADA keshlanadi; filtrga
-`paidListCte`, qator holatiga `Set`). ⚠️ Serverda (2026-09-15): to'langan ro'yxatlarda 6,45 mln id, CTE + skan
+eksportda — `server/services/unpaidItems.ts` (kanalning kiritilgan, lekin TO'LANMAGAN qismlari to'plami, XOTIRADA
+keshlanadi): shart teskari yoziladi — to'langan = `sent` VA bu ro'yxatda yo'q. ⚠️ Teskari, chunki to'langanlar
+ro'yxati har so'rovda ~2 MB parametr bo'lardi (QQS: 179 685 to'langan, 736 to'lanmagan). ⚠️ Serverda (2026-09-15): to'langan ro'yxatlarda 6,45 mln id, CTE + skan
 7,6 s — faqat keshlangan hisobotlarda, bitta kanal bo'lsa `paidCte([rt])`. Yoyishda `ITEMS_PARSED` (`translate`),
 GIN qidiruvida — faqat `ITEMS_ARR`. ⚠️ Qatorga GIN tekshiruvi (`@> ARRAY[pi.id]`) ISHLATMANG: Postgres unga
 GIN'ni tanlamadi (1,6 s/qator). Belgisiz, lekin to'langan ulush o'tkazilmagan/tasdiqlanmaganda qoladi (QQS
@@ -172,11 +174,11 @@ lib/channels.ts             12 kanal (ustun nomlari — whitelist, `rt` — tops
 lib/uzasbo.ts               g'aznachilik holatlari (to'langan = SENT + 4), holat ranglari
 lib/filters.ts              URL ↔ filtr (dan/gacha/hudud/tuman), href()
 server/services/uzasboSql.ts  topshiriqnoma SQL bo'laklari: GIN ifodasi, PAID, `paid` CTE (bit-maska)
-server/services/paidItems.ts  kanalning to'langan qismlari to'plami (xotira keshi; ro'yxat va eksport)
+server/services/unpaidItems.ts  kanalning kiritilgan-to'lanmagan qismlari (xotira keshi; ro'yxat va eksport)
 server/services/payments.ts BARCHA SQL (to'lovlar): matritsa, hudud × kanal (panel), hudud/tuman kesimi,
                             qarz yoshi, shartnoma muammolari, ro'yxat, eksport bo'laklari
-server/services/taqsimot.ts BARCHA SQL (taqsimot): hujjat, biriktirish borishi, muammoli hujjatlar,
-                            ikki marta to'langan
+server/services/taqsimot/   BARCHA SQL (taqsimot): hujjat.ts · muammoli.ts · takroriy.ts ·
+                            biriktirish.ts · shared.ts; import — `@/server/services/taqsimot`
 server/services/nazorat.ts  nazorat paneli: kunlik dinamika
 server/services/yonalishlar.ts  yo'nalishlar svodi (SQL'siz — `getRegionMatrix` ustidan)
 app/dashboard/              nazorat paneli · kanal/[key] · royxat · taqsimot (hujjat/biriktirish/muammoli/
@@ -186,16 +188,22 @@ app/api/export/route.ts     Excel (oqim), ro'yxat bilan bir xil Selection
 app/api/taqsimot/…          Excel: bitta hujjat taqsimoti (4 varaq) · biriktirish borishi · hujjatlar
 app/api/shartnomalar        Excel: shartnomalar bo'yicha
 app/api/yonalishlar         Excel: yo'nalishlar svodi (2 varaq)
+app/api/warm                kesh isitish (sessiyasiz, `WARM_TOKEN`; serverda cron — DEPLOY.md §6)
+scripts/maintenance/        audit tozalash (`docker compose --profile maintenance run --rm prune`)
 ```
 
 - ⚠️ Ustun nomlari SQL'ga faqat `CHANNELS` dan (`Prisma.raw`); qiymatlar doim parametr.
 - ⚠️ Jadvaldagi son = ro'yxatdagi son: havolalar `filterParams()` dan (dan HAR DOIM beriladi).
 - Kesh: `unstable_cache`, tag `payments`, `CACHE_SECONDS` (5 daq). "Yangilash" tugmasi tag'ni tashlaydi.
-  ⚠️ To'langanlikka bog'liq og'ir hisoblar (panel, kanal sahifalari, `paidItems`) — `PAID_CACHE_SECONDS`
+  ⚠️ To'langanlikka bog'liq og'ir hisoblar (panel, kanal sahifalari, `unpaidItems`) — `PAID_CACHE_SECONDS`
   (30 daq; serverda hudud × kanal 16 s — foydalanuvchi qarori, 2026-09-15); natijada `computedAt`, sahifada
-  "hisoblangan" vaqti. "Yangilash" `paidItems` xotira keshini ham tozalaydi.
+  "hisoblangan" vaqti. "Yangilash" `unpaidItems` xotira keshini ham tozalaydi.
 - Eksport: `EXPORT_MAX_ROWS` (300 000), kalit bo'yicha (`pi.id >`) bo'laklar, har eksport auditda.
 - ⚠️ Matn SERVERDA formatlanadi (`lib/format.ts`) — client'da `toLocaleString` gidratsiyani buzadi.
+- Xavfsizlik sarlavhalari (CSP va h.k.) — `next.config.mjs`; HSTS esa nginx'da. ⚠️ CSP'da
+  `unsafe-inline` SHART (Next inline script/style); `unsafe-eval` faqat dev'da.
+- Konteyner xotirasi `docker-compose.yml` da chegaralangan (1 GB, Node heap 768 MB) — xotira keshi
+  (`unpaidItems`) cheksiz o'smasin.
 
 ## Kirish
 
@@ -216,6 +224,19 @@ cookie portga bog'lanmaydi.
 Sub-path: production'da `basePath = "/payments"` (`next.config.mjs` + `lib/basePath.ts` —
 ikkalasi birga). Qo'lda `withBase()`: plain `<a href>`, `<img src>`, `signIn/signOut`
 `redirectTo`. Auth.js basePath (`/api/auth`) — TEGILMAYDI.
+
+## Testlar
+
+`scripts/test/` — HTTP tekshiruvlari (`npm run test:http`): sahifa ochiladimi, SONLAR bazadan
+mustaqil hisoblangani bilan bir xilmi, kim nimani ko'radi. Har to'plam — alohida modul
+(`export default async (t) => …`), umumiy yordamchilar `_lib.mjs` da, ishga tushirgich `run-all.mjs`
+(bitta xato bo'lsa chiqish kodi 1).
+- ⚠️ Dev server (3001) va ikkala DEV baza kerak: `npm run dev:setup`, `npm run dev:stub`, `npm run dev`.
+- ⚠️ Kutilgan qiymat HAR DOIM bazadan qayta hisoblanadi — ilovaning o'z xizmatlari chaqirilmaydi,
+  aks holda test xatoni ham "to'g'ri" deb tasdiqlardi.
+- Test foydalanuvchilari `test-` bilan boshlanadi va oxirida o'chiriladi (`cleanup`).
+- Yangi hisobot qo'shsangiz — shu yerga to'plam qo'shing (sonlar + ruxsatlar).
+- CI (`.github/workflows/ci.yml`) faqat `typecheck` va `build` ni bajaradi; HTTP testlari lokal.
 
 ## Ishlash tartibi
 

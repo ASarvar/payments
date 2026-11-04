@@ -48,6 +48,13 @@ services:
     <<: *host-gateway
     ports:
       - "127.0.0.1:3001:3000"
+    # ⚠️ Xotira chegarasi: ilova kanallar bo'yicha to'lanmagan qismlar ro'yxatini XOTIRADA saqlaydi
+    #    (`server/services/unpaidItems.ts`). NODE_OPTIONS chegaradan PAST — Node o'zi tozalasin,
+    #    konteyner OOM bilan o'ldirilmasin.
+    mem_limit: 1g
+    mem_reservation: 256m
+    environment:
+      NODE_OPTIONS: --max-old-space-size=768
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -64,6 +71,19 @@ services:
     command: ["npx", "tsx", "prisma/seed.ts"]
     profiles: ["setup"]
     restart: "no"
+
+  # ─────────── Audit tozalash (cron: oyda bir, DEPLOY.md §6) ───────────
+  prune:
+    build:
+      context: .
+      target: tools
+    image: tolov-monitoring-tools:latest
+    env_file: .env.production
+    <<: *host-gateway
+    command: ["npx", "tsx", "scripts/maintenance/prune-audit.ts"]
+    profiles: ["maintenance"]
+    restart: "no"
+    logging: *default-logging
 
 # ⚠️ Tarmoq manzili QAT'IY — host Postgres'ining `pg_hba.conf` ida aynan shu
 #    diapazonga ruxsat beriladi (DEPLOY.md §2). O'zgartirsangiz — u yerda ham.

@@ -87,6 +87,30 @@ blokiga qo'shing:
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
+## 6. Davriy ishlar (cron)
+
+Ikkalasi ham ixtiyoriy, lekin tavsiya qilinadi. `crontab -e` (root):
+
+```cron
+# Nazorat paneli keshini fonda isitish — kesh 30 daqiqa, shuning uchun 25 daqiqada bir marta.
+# Tokenni .env.production dagi WARM_TOKEN dan oling (buyruqda qo'lda yozmang — fayldan o'qiladi).
+*/25 * * * * cd /mnt/hdd1/payments && curl -fsS -m 300 -H "X-Warm-Token: $(. ./.env.production; echo "$WARM_TOKEN")" http://127.0.0.1:3001/payments/api/warm > /dev/null
+
+# Audit yozuvlarini tozalash (AUDIT_KEEP_DAYS, standart 365 kun) — oyning 1-kuni, 03:10 da.
+10 3 1 * * cd /mnt/hdd1/payments && docker compose --profile maintenance run --rm prune >> /var/log/payments-prune.log 2>&1
+```
+
+⚠️ `WARM_TOKEN` `.env.production` da bo'lmasa, `/api/warm` umuman ishlamaydi (404) — isitish
+shunchaki bajarilmaydi, ilova esa avvalgidek ishlayveradi. Tokenni yaratish: `openssl rand -base64 36`.
+⚠️ Isitish og'ir hisoblarni oldindan bajaradi; birinchi foydalanuvchi kutmaydi. Qo'lda sinash:
+
+```bash
+curl -s -H "X-Warm-Token: <token>" http://127.0.0.1:3001/payments/api/warm
+```
+
+⚠️ Xavfsizlik sarlavhalari (CSP, X-Frame-Options va h.k.) ilovaning o'zidan keladi; HSTS esa
+nginx'da (`Strict-Transport-Security`) — TLS o'sha yerda tugaydi.
+
 ## Yangilash
 
 ```bash

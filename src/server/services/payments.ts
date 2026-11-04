@@ -5,9 +5,9 @@ import { readOnly } from "@/lib/projectDb";
 import { CHANNELS, channelByKey, type Channel, type Holat } from "@/lib/channels";
 import { regionRank } from "@/lib/regions";
 import { isoDate, isoTs, str, toNum, type Row } from "@/server/services/sqlUtil";
-import { PAID_CACHE_SECONDS, PAID_JOIN, paidBit, paidCte, paidListCte } from "@/server/services/uzasboSql";
+import { PAID_CACHE_SECONDS, PAID_JOIN, paidBit, paidCte } from "@/server/services/uzasboSql";
 import { nowTashkent } from "@/lib/format";
-import { getPaidItemSet } from "@/server/services/paidItems";
+import { getUnpaidSent } from "@/server/services/unpaidItems";
 
 /**
  * To'lovlar taqsimoti — `project.payment_items` ustidan barcha so'rovlar SHU YERDA.
@@ -76,11 +76,16 @@ function mustChannel(key: string): Channel {
   return ch;
 }
 
-function metricConds(ch: Channel): Record<MetricKey, Prisma.Sql> {
+/**
+ * `paidSql` — "g'aznachilik to'lagan" sharti. Standarti — `paid` CTE bit-maskasi (agregatlar:
+ * panel, kanal sahifalari). Ro'yxat va eksport uni TESKARI ro'yxat bilan almashtiradi
+ * (`unpaidItems.ts`) — o'shanda so'rovga `paid` CTE ham, `PAID_JOIN` ham kerak emas.
+ */
+function metricConds(ch: Channel, paidSql?: Prisma.Sql): Record<MetricKey, Prisma.Sql> {
   const S = col(ch.sum);
   const A = col(ch.accept);
   const T = col(ch.sent);
-  const P = paidBit(ch.rt);
+  const P = paidSql ?? paidBit(ch.rt);
   // ⚠️ `IS TRUE` / `IS NOT TRUE` — NULL ham "yo'q" hisoblanadi (`= true` NULL'ni tashlab ketardi).
   // ⚠️ To'langan — FAQAT belgisi bor (`sent`) ulushlar ichida: belgisiz, lekin to'langan (kutilmagan)
   // ulush o'tkazilmagan/tasdiqlanmaganda qoladi — ular QQS SQL'i bilan mos turishi shart.
@@ -107,8 +112,8 @@ function metricConds(ch: Channel): Record<MetricKey, Prisma.Sql> {
 const ACTIVE_CONTRACT = Prisma.sql`c.id = pi.contract_id AND c.state = 1 AND c.doc_status = 3`;
 const NO_REQUISITES = Prisma.sql`(NULLIF(btrim(c.owner_account), '') IS NULL OR NULLIF(btrim(c.owner_mfo), '') IS NULL)`;
 
-export function holatCond(ch: Channel, h: Holat): Prisma.Sql {
-  const m = metricConds(ch);
+export function holatCond(ch: Channel, h: Holat, paidSql?: Prisma.Sql): Prisma.Sql {
+  const m = metricConds(ch, paidSql);
   switch (h) {
     case "shartnomasiz":
       return Prisma.sql`${m.otkazilmagan} AND NOT EXISTS (SELECT 1 FROM vw_all_contracts c WHERE ${ACTIVE_CONTRACT})`;
@@ -531,28 +536,27 @@ export interface Selection {
 const PAID_HOLATLAR: readonly Holat[] = ["tolangan", "topshiriqnomada"];
 
 /**
- * `head` — `WITH paid …` (faqat to'langanlik holatlarida — kanalning keshlangan to'plamidan, yoyishsiz),
- * `from` — `payment_items pi` (+ `PAID_JOIN`). `knownPaid` — shu holatdagi har qatorning to'langanligi.
+ * Ro'yxat/eksport so'rovi. To'langanlikka bog'liq holatlarda "to'langan" sharti KESHLANGAN TESKARI
+ * ro'yxatdan quriladi: kiritilgan VA to'lanmaganlar ro'yxatida YO'Q (`unpaidItems.ts`) — so'rovga
+ * `paid` CTE kerak emas, parametr esa bir necha KB (to'langanlar ro'yxati ~2 MB bo'lardi).
+ * `knownPaid` — shu holatdagi har qatorning to'langanligi (qo'shimcha tekshiruvsiz).
  */
 async function selectionSql(
   sel: Selection,
-): Promise<{ ch: Channel; conds: Prisma.Sql[]; head: Prisma.Sql; from: Prisma.Sql; knownPaid?: boolean }> {
+): Promise<{ ch: Channel; conds: Prisma.Sql[]; from: Prisma.Sql; knownPaid?: boolean }> {
   const ch = mustChannel(sel.channel);
-  const conds = [...filterConds(sel.f), holatCond(ch, sel.holat)];
-  if (sel.q) conds.push(qCond(sel.q));
+  const from = Prisma.sql`payment_items pi`;
   if (!PAID_HOLATLAR.includes(sel.holat)) {
     // Belgisiz holatlarda to'langan ulush bo'lmaydi (`tolangan` ⊂ `sent`).
     const unsent = sel.holat === "otkazilmagan" || sel.holat === "tasdiqlanmagan" || sel.holat === "shartnomasiz" || sel.holat === "rekvizitsiz";
-    return { ch, conds, head: Prisma.empty, from: Prisma.sql`payment_items pi`, knownPaid: unsent ? false : undefined };
+    const conds = [...filterConds(sel.f), holatCond(ch, sel.holat)];
+    if (sel.q) conds.push(qCond(sel.q));
+    return { ch, conds, from, knownPaid: unsent ? false : undefined };
   }
-  const paid = await getPaidItemSet(ch.rt);
-  return {
-    ch,
-    conds,
-    head: Prisma.sql`WITH ${paidListCte([...paid], ch.rt)}`,
-    from: Prisma.sql`payment_items pi ${PAID_JOIN}`,
-    knownPaid: sel.holat === "tolangan",
-  };
+  const unpaid = [...(await getUnpaidSent(ch))];
+  const conds = [...filterConds(sel.f), holatCond(ch, sel.holat, Prisma.sql`NOT (pi.id = ANY(${unpaid}::bigint[]))`)];
+  if (sel.q) conds.push(qCond(sel.q));
+  return { ch, conds, from, knownPaid: sel.holat === "tolangan" };
 }
 
 /** Qatorlarga to'langanlik belgisi: holat hal qilgan bo'lsa — o'sha; aks holda kanal to'plamidan. */
@@ -562,8 +566,8 @@ async function withPaid(rows: PaymentRow[], ch: Channel, knownPaid?: boolean): P
     return rows;
   }
   if (!rows.some((r) => r.sent === true)) return rows;
-  const paid = await getPaidItemSet(ch.rt);
-  for (const r of rows) r.paid = r.sent === true && paid.has(r.id);
+  const unpaid = await getUnpaidSent(ch);
+  for (const r of rows) r.paid = r.sent === true && !unpaid.has(r.id);
   return rows;
 }
 
@@ -576,9 +580,9 @@ export interface SelectionSummary {
 }
 
 export async function selectionSummary(sel: Selection): Promise<SelectionSummary> {
-  const { ch, conds, head, from } = await selectionSql(sel);
+  const { ch, conds, from } = await selectionSql(sel);
   const rows = await readOnly((tx) =>
-    tx.$queryRaw<Row[]>(Prisma.sql`${head}
+    tx.$queryRaw<Row[]>(Prisma.sql`
       SELECT count(*) AS n, COALESCE(sum(${col(ch.sum)}), 0) AS s, COALESCE(sum(pi.asum), 0) AS a
       FROM ${from} WHERE ${whereSql(conds)}`),
   );
@@ -589,16 +593,16 @@ export async function selectionSummary(sel: Selection): Promise<SelectionSummary
 export const PAGE_SIZE = 50;
 
 export async function listPayments(sel: Selection, page: number): Promise<{ summary: SelectionSummary; rows: PaymentRow[]; page: number; pages: number }> {
-  const { ch, conds, head, from, knownPaid } = await selectionSql(sel);
+  const { ch, conds, from, knownPaid } = await selectionSql(sel);
   const res = await readOnly(async (tx) => {
-    const [agg] = await tx.$queryRaw<Row[]>(Prisma.sql`${head}
+    const [agg] = await tx.$queryRaw<Row[]>(Prisma.sql`
       SELECT count(*) AS n, COALESCE(sum(${col(ch.sum)}), 0) AS s, COALESCE(sum(pi.asum), 0) AS a
       FROM ${from} WHERE ${whereSql(conds)}`);
     const summary = { n: toNum(agg?.n), s: toNum(agg?.s), asum: toNum(agg?.a) };
     const pages = Math.max(1, Math.ceil(summary.n / PAGE_SIZE));
     const p = Math.min(Math.max(1, page), pages);
     // ⚠️ Avval faqat id'lar (ko'rinishga murojaatsiz), keyin 50 ta qator uchun tafsilot.
-    const idRows = await tx.$queryRaw<{ id: bigint }[]>(Prisma.sql`${head}
+    const idRows = await tx.$queryRaw<{ id: bigint }[]>(Prisma.sql`
       SELECT pi.id FROM ${from} WHERE ${whereSql(conds)}
       ORDER BY pi.doc_date DESC, pi.id DESC
       LIMIT ${PAGE_SIZE}::int OFFSET ${(p - 1) * PAGE_SIZE}::int`);
@@ -613,30 +617,18 @@ export async function listPayments(sel: Selection, page: number): Promise<{ summ
  * Eksport uchun bo'lak-bo'lak o'qish — butun natija xotiraga yig'ilmaydi.
  * ⚠️ Kalit bo'yicha (`pi.id >`), OFFSET emas: chuqur OFFSET har bo'lakda boshidan
  * sanab chiqadi va 300 000 qatorda kvadratik sekinlashardi.
- * ⚠️ To'langanlik holatlarida `paid` — kanalning butun to'plami (QQS ~180 ming id) parametr bo'lib
- * ketadi; bo'lak boshiga qayta yuborilmasin: id'lar BIR so'rovda olinadi (≤ `EXPORT_MAX_ROWS`,
- * eksport oldidan tekshirilgan), keyin bo'laklab tafsilot.
+ * ⚠️ To'langanlik holatlarida ham shu yo'l: shart keshlangan TESKARI ro'yxatdan (bir necha KB),
+ * shuning uchun bo'lak boshiga qayta yuborilishi muammo emas.
  */
 export async function* exportChunks(sel: Selection, chunk = 5000): AsyncGenerator<PaymentRow[]> {
-  const { ch, conds, head, from, knownPaid } = await selectionSql(sel);
-  if (PAID_HOLATLAR.includes(sel.holat)) {
-    const all = await readOnly((tx) =>
-      tx.$queryRaw<{ id: bigint }[]>(Prisma.sql`${head}
-        SELECT pi.id FROM ${from} WHERE ${whereSql(conds)} ORDER BY pi.id`),
-    );
-    for (let i = 0; i < all.length; i += chunk) {
-      const ids = all.slice(i, i + chunk).map((r) => String(r.id));
-      yield await withPaid(await readOnly((tx) => detailRows(tx, ch, ids)), ch, knownPaid);
-    }
-    return;
-  }
+  const { ch, conds, from, knownPaid } = await selectionSql(sel);
   let last: string | null = null;
   for (;;) {
     const after: string | null = last;
     const rows: PaymentRow[] = await readOnly(async (tx) => {
       const c = after === null ? conds : [...conds, Prisma.sql`pi.id > ${after}::bigint`];
       const ids = await tx.$queryRaw<{ id: bigint }[]>(Prisma.sql`
-        SELECT pi.id FROM payment_items pi WHERE ${whereSql(c)} ORDER BY pi.id LIMIT ${chunk}::int`);
+        SELECT pi.id FROM ${from} WHERE ${whereSql(c)} ORDER BY pi.id LIMIT ${chunk}::int`);
       return detailRows(tx, ch, ids.map((r) => String(r.id)));
     });
     if (rows.length === 0) return;

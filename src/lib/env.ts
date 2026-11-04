@@ -35,6 +35,11 @@ const schema = z.object({
   CACHE_SECONDS: z.coerce.number().int().positive().default(300),
   /** Excel eksportining eng katta hajmi (qator) — undan ko'p bo'lsa filtr so'raladi. */
   EXPORT_MAX_ROWS: z.coerce.number().int().positive().default(300_000),
+  /**
+   * Kesh isitish yo'li (`/api/warm`) uchun maxfiy kalit — serverdagi cron shuni yuboradi.
+   * Berilmasa yo'l umuman ishlamaydi (404). Kamida 24 belgi.
+   */
+  WARM_TOKEN: z.string().min(24).optional(),
 });
 
 export const env = schema.parse(process.env);

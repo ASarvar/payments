@@ -27,6 +27,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  // Statik fayllar, logotiplar va auth API'dan tashqari hamma narsa himoyalangan.
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.svg$).*)"],
+  // Statik fayllar, logotiplar, auth API va kesh isitish yo'lidan tashqari hamma narsa himoyalangan.
+  // ⚠️ `api/warm` — sessiyasiz chaqiriladi (serverdagi cron), lekin o'zi `WARM_TOKEN` ni tekshiradi.
+  matcher: ["/((?!api/auth|api/warm|_next/static|_next/image|favicon.ico|.*\\.svg$).*)"],
 };

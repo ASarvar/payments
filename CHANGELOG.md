@@ -3,6 +3,26 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.3.7 — 2026-11-04
+
+- **"To'langan" va "Topshiriqnomada" ro'yxatlari tezlashdi.** Avval har so'rovda kanalning barcha
+  to'langan qism raqamlari bazaga yuborilardi (QQS'da ~180 000 ta, ~2 MB). Endi teskarisi —
+  kiritilgan, lekin to'lanmagan qismlar ro'yxati saqlanadi (QQS'da ~700 ta), natija o'zgarmaydi.
+  Excel eksporti ham endi barcha qatorlarni xotiraga yig'masdan, bo'lak-bo'lak o'qiydi.
+- **Avtomatik tekshiruvlar repo'ga qo'shildi** (`npm run test:http`, 6 to'plam ~110 tekshiruv):
+  sahifalar va ruxsatlar matritsasi, to'langan/topshiriqnomada holatlari, nazorat paneli,
+  yo'nalishlar svodi, taqsimot (hujjat, muammoli, takroriy, biriktirish zinasi) va shartnomalar.
+  Har bir son bazadan mustaqil hisoblangani bilan solishtiriladi.
+- **CI** (`.github/workflows/ci.yml`): har push'da `typecheck` va `next build`.
+- **Kesh isitish** (`/api/warm`, `WARM_TOKEN` bilan): serverdagi cron og'ir hisoblarni oldindan
+  bajaradi — nazorat panelini birinchi ochgan odam kutmaydi (DEPLOY.md §6).
+- **Audit tozalash**: `docker compose --profile maintenance run --rm prune` eski yozuvlarni o'chiradi
+  (`AUDIT_KEEP_DAYS`, standart 365 kun).
+- **Xavfsizlik sarlavhalari** (CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy) va
+  konteyner xotira chegarasi (1 GB) qo'shildi.
+- Ichki tartib: `taqsimot.ts` to'rt bo'limga ajratildi (`taqsimot/` papkasi), `.claude/` git'dan
+  chiqarildi. Ilova ishlashiga ta'siri yo'q.
+
 ## 0.3.6 — 2026-09-17
 
 - **Yo'nalishlar bo'yicha svod** (yangi menyu, faqat adminlar). Pul qaysi oluvchiga ketishi kerakligi

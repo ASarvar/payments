@@ -26,6 +26,12 @@ const schema = z.object({
   /** `project` bazasi. Sozlanmagan bo'lsa sahifalar ogohlantirish ko'rsatadi. */
   PROJECT_DATABASE_URL: z.string().url().optional(),
   /**
+   * ⚠️ YAGONA yozish mumkin bo'lgan ulanish — faqat "Pul biriktirish" bo'limi ishlatadi
+   * (`payment_items.state = 0`). Serverda bu rolga FAQAT shu jadvalga UPDATE huquqi beriladi
+   * (DEPLOY.md §7). Berilmasa — bekor qilish tugmasi o'chiq, ilova butunlay read-only.
+   */
+  PROJECT_WRITE_DATABASE_URL: z.string().url().optional(),
+  /**
    * Bitta so'rovning eng ko'p vaqti — Postgres'ning `statement_timeout` i.
    * ⚠️ `project` — boshqa tizimning JONLI bazasi: bizning og'ir so'rovimiz uni
    * sekinlashtirmasligi uchun chegara shart.

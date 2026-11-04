@@ -52,6 +52,8 @@ async function main() {
     `NEXTAUTH_SECRET="${randomBytes(32).toString("base64")}"`,
     `NEXTAUTH_URL="http://localhost:3001"`,
     `PROJECT_DATABASE_URL="${withDb(admin, "payments_project_stub")}"`,
+    // ⚠️ Dev'da yozuv ulanishi SOXTA bazaga qaraydi — "Pul biriktirish" ni sinash uchun.
+    `PROJECT_WRITE_DATABASE_URL="${withDb(admin, "payments_project_stub")}"`,
     `SEED_ADMIN_USERNAME="admin"`,
     `SEED_ADMIN_PASSWORD="${randomBytes(12).toString("base64url")}"`,
     "",

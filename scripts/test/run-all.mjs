@@ -4,7 +4,7 @@
 //   npm run test:http
 import { BASE, cleanup, disconnect, get, suite } from "./_lib.mjs";
 
-const SUITES = ["./smoke.mjs", "./paid-holat.mjs", "./nazorat.mjs", "./yonalishlar.mjs", "./taqsimot.mjs", "./shartnomalar.mjs"];
+const SUITES = ["./smoke.mjs", "./paid-holat.mjs", "./nazorat.mjs", "./yonalishlar.mjs", "./taqsimot.mjs", "./shartnomalar.mjs", "./pul-biriktirish.mjs"];
 
 const t0 = Date.now();
 try {

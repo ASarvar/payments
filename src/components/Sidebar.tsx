@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Layers, List, Split, FileText, Users, ScrollText, LogOut, Menu, X, ArrowRightLeft } from "lucide-react";
+import { LayoutDashboard, Layers, List, Split, FileText, Users, ScrollText, LogOut, Menu, X, ArrowRightLeft, Link2Off } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { withBase } from "@/lib/basePath";
@@ -32,6 +32,8 @@ const NAV: NavItem[] = [
   // Hozircha faqat adminlar (foydalanuvchi qarori, 2026-09-15).
   { href: "/dashboard/taqsimot", match: "/dashboard/taqsimot", label: "Taqsimot", icon: Split, adminOnly: true },
   { href: "/dashboard/shartnomalar", match: "/dashboard/shartnomalar", label: "Shartnomalar", icon: FileText, adminOnly: true },
+  // ⚠️ Yagona yozuv amali (`payment_items.state = 0`) — faqat adminlar (foydalanuvchi qarori, 2026-11-04).
+  { href: "/dashboard/pul-biriktirish", match: "/dashboard/pul-biriktirish", label: "Pul biriktirish", icon: Link2Off, adminOnly: true },
   { href: "/dashboard/users", match: "/dashboard/users", label: "Foydalanuvchilar", icon: Users, superOnly: true },
   { href: "/dashboard/audit", match: "/dashboard/audit", label: "Audit", icon: ScrollText, superOnly: true },
 ];

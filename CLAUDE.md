@@ -20,6 +20,10 @@ Navbat/worker YO'Q — hamma narsa so'rov paytida, keshlangan.
 ⚠️ `project` ga har so'rov `readOnly()` orqali: `SET TRANSACTION READ ONLY` +
 `statement_timeout`. Jadvalda audit triggeri bor va `project` roli yoza oladi — kafolat
 kod intizomida emas, Postgres'da. Yangi so'rov yozsangiz — faqat `readOnly()` ichida.
+⚠️ YAGONA ISTISNO (foydalanuvchi qarori, 2026-11-04): "Pul biriktirish" bo'limi
+`payment_items.state = 0` qiladi — `lib/projectDb.ts` dagi `writeTx()` orqali, ALOHIDA ulanishda
+(`PROJECT_WRITE_DATABASE_URL`; serverda rolga faqat shu jadvalning `state`/`updated_at` ustunlariga
+UPDATE huquqi — DEPLOY.md §7). Boshqa hech qayerda `writeTx` ni chaqirmang.
 ⚠️ `project` jadvallarini `schema.prisma` ga QO'SHMANG — migratsiyasini biz boshqarmaymiz.
 
 ## Buyruqlar
@@ -155,6 +159,19 @@ Pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan (`server/services/y
   + topshiriqnomada (uchalasi alohida ustun). Ikkinchi jadval — yo'nalish × hudud (chiqishi kerak, mln so'm;
   hudud filtridan qat'i nazar barcha hududlar). Tuman kesimi YO'Q (`payment_items` hudud × kanal hisobi).
 
+## Pul biriktirish — bekor qilish (2026-11-04)
+
+`server/services/pulBiriktirish.ts` + `app/dashboard/pul-biriktirish/`. Faqat adminlar.
+- Shart (foydalanuvchi qarori): summasi > 0 bo'lgan HAR BIR kanalning `sent_*` ustuni `true`
+  BO'LMASLIGI; qism `state = 1` bo'lishi. Mos kelsa — `state = 0`, `updated_at = localtimestamp`.
+- ⚠️ Shart UPDATE ning `WHERE` ichida ham takrorlanadi (oraliqda belgi qo'yilsa — 0 qator o'zgaradi),
+  sabab esa keyin qayta o'qib aniqlanadi.
+- ⚠️ Jadvalda `trg_check_payment_items_limit` (BEFORE UPDATE) va `trg_audit` triggerlari bor:
+  birinchisi amalni rad etishi mumkin (xato foydalanuvchiga ko'rsatiladi), ikkinchisi o'zgarishni
+  o'sha tizim auditiga yozadi. Bizda ham har urinish auditda (`CANCEL_ATTACHMENT[_FAILED]`).
+- Yozuv ulanishi yo'q bo'lsa sahifa faqat tekshiradi (tugma o'chiq) — standart holat shu.
+- Qaytarish (state = 1) YO'Q (foydalanuvchi qarori).
+
 ## Shartnomalar bo'yicha (2026-09-15)
 
 Mavjud tizimdagi "yilda hisoblangan ijara to'lovlari va penyalar" — AYNAN o'sha ta'rif (foydalanuvchi
@@ -181,6 +198,7 @@ server/services/taqsimot/   BARCHA SQL (taqsimot): hujjat.ts · muammoli.ts · t
                             biriktirish.ts · shared.ts; import — `@/server/services/taqsimot`
 server/services/nazorat.ts  nazorat paneli: kunlik dinamika
 server/services/yonalishlar.ts  yo'nalishlar svodi (SQL'siz — `getRegionMatrix` ustidan)
+server/services/pulBiriktirish.ts  biriktirishni bekor qilish — YAGONA yozuv amali (`writeTx`)
 app/dashboard/              nazorat paneli · kanal/[key] · royxat · taqsimot (hujjat/biriktirish/muammoli/
                             takroriy) · shartnomalar · users · audit
 server/services/shartnomalar.ts  BARCHA SQL (shartnomalar bo'yicha): hisoblangan/to'langan/qarzdorlik

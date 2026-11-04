@@ -3,6 +3,16 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## Chiqarilmagan
+
+- **Pul biriktirish** (yangi menyu, faqat adminlar). Biriktirish (to'lov qismi) ID si kiritiladi;
+  ilova summasi noldan katta kanallarni va ularning topshiriqnomaga kiritilgan-kiritilmaganini
+  ko'rsatadi. Hech biri kiritilmagan bo'lsa — **birikishni bekor qilish** tugmasi ochiladi va qism
+  faol bo'lmay qoladi (`state = 0`), ya'ni hisobotlardan chiqadi. Aks holda tugma yopiq.
+  ⚠️ Bu ilovaning birinchi va yagona yozuv amali: alohida ulanish va serverda faqat shu jadvalga
+  huquqi bor rol kerak (DEPLOY.md §7); rol berilmasa sahifa faqat tekshiradi.
+  Har urinish — muvaffaqiyatli ham, rad etilgani ham — auditda.
+
 ## 0.3.7 — 2026-11-04
 
 - **"To'langan" va "Topshiriqnomada" ro'yxatlari tezlashdi.** Avval har so'rovda kanalning barcha

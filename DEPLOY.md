@@ -111,6 +111,48 @@ curl -s -H "X-Warm-Token: <token>" http://127.0.0.1:3001/payments/api/warm
 ⚠️ Xavfsizlik sarlavhalari (CSP, X-Frame-Options va h.k.) ilovaning o'zidan keladi; HSTS esa
 nginx'da (`Strict-Transport-Security`) — TLS o'sha yerda tugaydi.
 
+## 7. "Pul biriktirish" — yozuv roli (ixtiyoriy)
+
+Ilovaning YAGONA yozuv amali: biriktirishni bekor qilish (`payment_items.state = 0`). Boshqa
+hamma narsa avvalgidek faqat o'qiydi. Rol berilmasa — sahifa ishlaydi, lekin tugma o'chiq turadi.
+
+⚠️ Alohida rol: huquq FAQAT bitta jadval va FAQAT ikki ustunga beriladi — kodda xato bo'lsa ham
+boshqa narsani o'zgartirib bo'lmaydi.
+
+```sql
+\c project
+CREATE ROLE payments_rw LOGIN;
+\password payments_rw
+GRANT CONNECT ON DATABASE project TO payments_rw;
+GRANT USAGE ON SCHEMA public TO payments_rw;
+GRANT SELECT ON public.payment_items TO payments_rw;
+GRANT UPDATE (state, updated_at) ON public.payment_items TO payments_rw;
+ALTER ROLE payments_rw SET statement_timeout = '60s';
+```
+
+`pg_hba.conf` ga (§2 dagi qator yonida):
+
+```
+host  project   payments_rw  172.30.77.0/24  scram-sha-256
+```
+
+```bash
+sudo systemctl reload postgresql
+```
+
+So'ng `.env.production` ga ulanishni qo'shing va konteynerni qayta ishga tushiring:
+
+```
+PROJECT_WRITE_DATABASE_URL="postgresql://payments_rw:PAROL@host.docker.internal:5432/project"
+```
+
+⚠️ Parolda `@` yoki `/` bo'lsa URL'da kodlangan bo'lishi shart.
+⚠️ `payment_items` da `trg_audit` triggeri bor — o'zgarish o'sha tizimning auditiga ham tushadi;
+bizning auditimizda esa kim va qaysi qismni bekor qilgani saqlanadi.
+⚠️ Tekshirish: huquq FAQAT shu jadvalda ekanini ko'rish uchun
+`psql "postgresql://payments_rw:...@127.0.0.1:5432/project" -c "UPDATE paydocs SET state = state;"`
+RUXSAT YO'Q xatosini berishi kerak.
+
 ## Yangilash
 
 ```bash

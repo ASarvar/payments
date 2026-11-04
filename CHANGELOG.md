@@ -3,7 +3,7 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
-## Chiqarilmagan
+## 0.3.8 — 2026-11-04
 
 - **Pul biriktirish** (yangi menyu, faqat adminlar). Biriktirish (to'lov qismi) ID si kiritiladi;
   ilova summasi noldan katta kanallarni va ularning topshiriqnomaga kiritilgan-kiritilmaganini

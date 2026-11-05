@@ -3,6 +3,14 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.4.1 — 2026-11-05
+
+- **Sahifalardagi tushuntirish matnlari olib tashlandi** (foydalanuvchi talabi): jadval ostidagi
+  kulrang izoh paragraflari — nazorat paneli (pul yo'li ostida va dinamika), shartnomalar,
+  yo'nalishlar, biriktirish borishi (respublika, hudud, hujjatlar), hujjat taqsimoti, takroriy
+  ro'yxat; foydalanuvchilar va audit sarlavhasi ostidagi matn. Ogohlantirishlar, ID kiritish
+  yo'riqnomasi va svetofor legendasi qoldi.
+
 ## 0.4.0 — 2026-11-05
 
 - **Kod izohlardan tozalandi** (foydalanuvchi talabi): 80 ta kod faylidan 448 izoh va

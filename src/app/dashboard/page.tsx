@@ -401,16 +401,6 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           </Card>
         </div>
       ) : null}
-
-      <p className="text-[12px] leading-relaxed text-muted-foreground">
-        <strong>Tushum</strong> va <strong>biriktirildi</strong> — «Biriktirish borishi» hisoboti bilan bir xil (hujjat
-        sanasi va hududi). <strong>Taqsimlandi</strong> — shartnomalarga biriktirilgan qismlarning 12 oluvchiga ulushi (to&apos;lov
-        sanasi bo&apos;yicha); keyingi bosqichlar shu ulushlardan: <strong>tasdiqlanmagan</strong> + <strong>o&apos;tkazilmagan</strong>{" "}
-        (tasdiqlangan, topshiriqnomaga kiritilmagan) + <strong>topshiriqnomada</strong> (kiritilgan, g&apos;aznachilik hali
-        to&apos;lamagan) + <strong>to&apos;langan</strong> = taqsimlangan. <strong>To&apos;langan</strong> — ulush g&apos;aznachilik
-        ijro etgan topshiriqnomada bor (<code>SENT</code>, javob 4). Ma&apos;lumot <code>project</code> bazasidan faqat
-        o&apos;qiladi.
-      </p>
     </div>
   );
 }
@@ -592,10 +582,6 @@ function Dynamics({ points, scope, area }: { points: DayPoint[]; scope: string; 
             </tbody>
           </table>
         </div>
-        <p className="border-t border-border px-4 py-2.5 text-[11.5px] text-muted-foreground">
-          Summalar mln so&apos;m. G&apos;aznachilik to&apos;lagan — shu kuni ijro etilgan topshiriqnomalar (pul oqimi); tushum
-          va biriktirilgan — hujjat sanasi bo&apos;yicha. Kunlar kesimida biriktirish keyingi kunlarga surilishi mumkin.
-        </p>
       </details>
     </Card>
   );

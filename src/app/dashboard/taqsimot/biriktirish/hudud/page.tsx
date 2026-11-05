@@ -154,10 +154,6 @@ export default async function BirHududPage({ searchParams }: { searchParams: Pro
               </table>
             </div>
           </Card>
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
-            Qatorlar kesishadi (joriy oy hisobot davri ichida, bugun joriy oy ichida) — shuning uchun JAMI qatori yo&apos;q.
-            «Joriy oy», «kecha», «bugun» — oxirgi sanaga ({dmy(to)}) nisbatan. Hisob respublika jadvalidagi bilan bir xil.
-          </p>
         </>
       ) : null}
     </div>

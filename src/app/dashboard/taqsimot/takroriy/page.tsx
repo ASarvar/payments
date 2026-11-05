@@ -125,14 +125,6 @@ export default async function DoublePaidPage({ searchParams }: { searchParams: P
           </Card>
 
           <Pager page={p} pages={pages} total={all.length} pageSize={PAGE_SIZE} hrefFor={(x) => href(PATH, { p: x > 1 ? x : undefined })} />
-
-          <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
-            <strong>Nega faqat balansda saqlovchi:</strong> uning har bir topshiriqnomasida bitta qism bo&apos;ladi va summa
-            aynan shu qism ulushiga teng. Boshqa kanallarda (QQS, mahalliy budjet, Markaz, PF-16, …) topshiriqnoma ro&apos;yxati
-            ko&apos;pincha davr boshidan to&apos;planadi — bitta qism o&apos;nlab topshiriqnomada qayta keltiriladi, summa esa faqat
-            yangi qismlar uchun to&apos;lanadi. Shuning uchun ular bo&apos;yicha ikki marta to&apos;lashni ro&apos;yxatdan aniqlab
-            bo&apos;lmaydi.
-          </p>
         </>
       ) : null}
     </div>

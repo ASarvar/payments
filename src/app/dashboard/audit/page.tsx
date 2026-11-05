@@ -15,12 +15,9 @@ export default async function AuditPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-bold tracking-tight" style={{ color: "var(--navy)" }}>
+      <h1 className="mb-5 text-xl font-bold tracking-tight" style={{ color: "var(--navy)" }}>
         Audit
       </h1>
-      <p className="mb-5 text-[13px] text-muted-foreground">
-        Oxirgi {LIMIT} ta amal: kirishlar, Excel eksportlari (hisob raqamlari bor), foydalanuvchi o&apos;zgarishlari.
-      </p>
       <Card title="Jurnal">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

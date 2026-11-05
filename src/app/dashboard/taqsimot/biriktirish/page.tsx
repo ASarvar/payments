@@ -179,14 +179,6 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
               </table>
             </div>
           </Card>
-
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
-            <strong>Tushum</strong> — bank to&apos;lov hujjatlari (<code>paydocs</code>), hujjat hududi va sanasi bo&apos;yicha.{" "}
-            <strong>Biriktirilgan</strong> — hujjatlardan ajratilgan summa (<code>payments</code>) va MUNIS orqali kelgan
-            to&apos;lovlar; <strong>shundan</strong> ustunlari faqat birinchisini turlarga bo&apos;ladi, MUNIS qismi alohida.
-            Hisob mavjud tizimdagi hisobot bilan bir xil; farqi — «bir kunda» tanlangan oxirgi sana bo&apos;yicha va doim
-            tushum = biriktirilgan + biriktirilmagan. Manfiy biriktirilmagan — ortiqcha biriktirilgan.
-          </p>
         </>
       ) : null}
     </div>

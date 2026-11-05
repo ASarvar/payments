@@ -147,13 +147,6 @@ export default async function ShartnomalarPage({ searchParams }: { searchParams:
               </table>
             </div>
           </Card>
-
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
-            <strong>Shartnomalar</strong> — {year} yilgi faol, tasdiqlangan shartnomalar (1 va 2-tur). <strong>Hisoblandi</strong> —
-            yil hisob-kitobi (ijara va penya). <strong>To&apos;landi</strong> — shu yilga biriktirilgan ijara va penya
-            to&apos;lovlari («bir kunda» — bugungi). <strong>Debitor</strong> — shartnomalar bo&apos;yicha qarz, <strong>kreditor</strong>{" "}
-            — ortiqcha to&apos;langan. Hisob mavjud tizimdagi hisobot bilan bir xil.
-          </p>
         </>
       ) : null}
     </div>

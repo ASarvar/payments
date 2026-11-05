@@ -195,15 +195,6 @@ export default async function YonalishlarPage({ searchParams }: { searchParams: 
               </table>
             </div>
           </Card>
-
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
-            <strong>Yo&apos;nalish</strong> — to&apos;lov taqsimlanadigan oluvchi (QQS, mahalliy budjet, balansda saqlovchi va
-            hokazo). <strong>Hisoblangan</strong> — shu yo&apos;nalishga ajratilgan ulush; <strong>to&apos;langan</strong> —
-            g&apos;aznachilik ijro etgan topshiriqnomadagi ulush. <strong>Chiqishi kerak</strong> — qolgani:{" "}
-            <strong>tasdiqlanmagan</strong> (hali ko&apos;rib chiqilmagan) + <strong>tasdiqlangan, kiritilmagan</strong>{" "}
-            (topshiriqnoma tayyorlanmagan) + <strong>topshiriqnomada</strong> (yuborilgan, g&apos;aznachilik hali
-            to&apos;lamagan). Hudud kesimida tuman yo&apos;q; ma&apos;lumot <code>project</code> bazasidan faqat o&apos;qiladi.
-          </p>
         </>
       ) : null}
     </div>

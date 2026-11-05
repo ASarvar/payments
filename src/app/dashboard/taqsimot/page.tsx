@@ -328,13 +328,6 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
           </p>
         ) : null}
       </Card>
-
-      <p className="text-[12px] leading-relaxed text-muted-foreground">
-        <strong>Topshiriqnomaga kiritilgan</strong> — qismdagi <code>sent_*</code> belgisi (ilovaning boshqa bo&apos;limlaridagi
-        «O&apos;tkazilgan» shu belgi). U topshiriqnoma YARATILGANDA qo&apos;yiladi — pul hali to&apos;lanmagan bo&apos;lishi mumkin.{" "}
-        <strong>G&apos;aznachilikda to&apos;langan</strong> — topshiriqnoma yuborilgan va g&apos;aznachilik ijro etgan (SENT, kod 4).
-        Faqat faol qismlar (<code>state = 1</code>) sanaladi. Ma&apos;lumot keshlanadi — «Yangilash» tugmasi uni yangilaydi.
-      </p>
     </>
   );
 }

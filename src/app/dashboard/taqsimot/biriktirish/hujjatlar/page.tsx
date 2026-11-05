@@ -300,11 +300,6 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
           </Card>
 
           <Pager page={p} pages={pages} total={summary.n} pageSize={PAGE_SIZE} hrefFor={pageHref} />
-
-          <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
-            Har hujjatga biriktirilgan — unga bog&apos;langan ajratmalar (<code>payments</code>) va MUNIS to&apos;lovlari
-            (<code>pay_id</code> orqali). Bu ilova hech narsani biriktirmaydi — faqat ko&apos;rsatadi.
-          </p>
         </>
       ) : null}
     </div>

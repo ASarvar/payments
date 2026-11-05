@@ -33,15 +33,9 @@ export default async function UsersPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-bold tracking-tight" style={{ color: "var(--navy)" }}>
+      <h1 className="mb-5 text-xl font-bold tracking-tight" style={{ color: "var(--navy)" }}>
         Foydalanuvchilar
       </h1>
-      <p className="mb-5 text-[13px] text-muted-foreground">
-        Administrator barcha hisobotlarni ko&apos;radi, super admin qo&apos;shimcha ravishda foydalanuvchilar va auditni
-        boshqaradi. Hudud moderatori faqat &quot;To&apos;lovlar ro&apos;yxati&quot;ni va faqat o&apos;z hududini ko&apos;radi
-        (Excel ham shu hudud bo&apos;yicha), respublika moderatori — xuddi shunday, lekin barcha hududlar bo&apos;yicha.
-        Parol tiklansa yoki foydalanuvchi bloklansa, uning sessiyalari darhol bekor bo&apos;ladi.
-      </p>
       {regionsOrNull === null ? (
         <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
           Hududlar ro&apos;yxatini to&apos;lovlar bazasidan olib bo&apos;lmadi — hozircha moderator qo&apos;shib yoki

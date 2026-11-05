@@ -76,7 +76,7 @@ async function main() {
       id bigint PRIMARY KEY, obl_id int, area_id int, contract_id bigint NOT NULL,
       asum numeric(18,2) NOT NULL, vat_sum numeric(18,4) NOT NULL, state int,
       created_at timestamp, updated_at timestamp, pay_id bigint, doc_date date NOT NULL, owner_tin bigint,
-      ayear int, pay_type int,
+      ayear int, pay_type int, parsing_sum numeric(18,4) DEFAULT 0, no_parsing_sum numeric(18,4) DEFAULT 0,
       ${chCols})`);
 
     const insertCols = CHANNELS.flatMap((c) => (c.key === "vat" ? [c.accept] : [c.sum, c.accept]));
@@ -119,6 +119,8 @@ async function main() {
         WHEN random() < 0.01 THEN true ELSE NULL END`,
     ).join(",\n        ");
     await run(`UPDATE payment_items SET ${sentSet}`);
+    const parsed = CHANNELS.map((c) => `COALESCE(${c.sum}, 0) * COALESCE(${c.accept}, false)::int`).join(" + ");
+    await run(`UPDATE payment_items SET parsing_sum = ${parsed}, no_parsing_sum = asum - (${parsed})`);
 
     await run("CREATE INDEX ON payment_items (state, obl_id, doc_date, area_id)");
 

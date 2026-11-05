@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { AlertTriangle, Ban, Banknote, CheckCircle2, Link2Off, Search } from "lucide-react";
+import { AlertTriangle, Ban, Banknote, CheckCircle2, Link2Off, Scissors, Search } from "lucide-react";
 import { requireUserOrRedirect } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage, projectWriteConfigured } from "@/lib/projectDb";
 import { href, one, type SP } from "@/lib/filters";
 import { dmy, money, nf, sum } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { findItem, type CancelTarget } from "@/server/services/pulBiriktirish";
-import { cancelAttachmentAction } from "./actions";
+import { cancelAttachmentAction, detachChannelsAction } from "./actions";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { KpiCard } from "@/components/KpiCard";
 import { inputCls, labelCls } from "@/components/FilterBar";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, totalStyle } from "@/components/ui";
@@ -74,6 +75,14 @@ export default async function PulBiriktirishPage({ searchParams }: { searchParam
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
             Biriktirish <strong>#{idRaw}</strong> bekor qilindi (<code>state = 0</code>).
+          </p>
+        </div>
+      ) : null}
+      {natija === "ajratildi" ? (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Biriktirish <strong>#{idRaw}</strong>: ochiq kanallar ajratildi, qism faol qoldi.
           </p>
         </div>
       ) : null}
@@ -219,8 +228,8 @@ function ItemView({ item, yozuvBor }: { item: CancelTarget; yozuvBor: boolean })
           </p>
           <form action={cancelAttachmentAction}>
             <input type="hidden" name="id" value={item.id} />
-            <button
-              type="submit"
+            <ConfirmSubmit
+              message={`Biriktirish #${item.id} (${sum(item.asum)} so'm) bekor qilinadi: state = 0. Davom etilsinmi?`}
               disabled={!ok || !yozuvBor}
               title={!yozuvBor ? "Yozuv ulanishi sozlanmagan" : !ok ? "Shartlar bajarilmagan" : "Birikishni bekor qilish"}
               className={cn(
@@ -230,11 +239,62 @@ function ItemView({ item, yozuvBor }: { item: CancelTarget; yozuvBor: boolean })
             >
               <Link2Off className="h-4 w-4" />
               Birikishni bekor qilish
-            </button>
+            </ConfirmSubmit>
           </form>
         </div>
       </Card>
+
+      {item.canDetach ? <DetachCard item={item} yozuvBor={yozuvBor} /> : null}
     </>
+  );
+}
+
+function DetachCard({ item, yozuvBor }: { item: CancelTarget; yozuvBor: boolean }) {
+  const jami = item.openShares.reduce((a, s) => a + s.sum, 0);
+  const keyin = item.asum - jami;
+  const royxat = item.openShares.map((s) => `${s.label}: ${sum(s.sum)}`).join(", ");
+  const message = [
+    `DIQQAT! Biriktirish #${item.id} o'zgartiriladi.`,
+    "",
+    `Ajratiladi: ${royxat} (tasdiq belgisi ham olib tashlanadi).`,
+    `Biriktirilgan summa: ${sum(item.asum)} → ${sum(keyin)} so'm.`,
+    `${sum(jami)} so'm to'lov hujjatida biriktirilmagan qoldiq bo'ladi.`,
+    `Topshiriqnomadagi kanallar (${item.blockers.join(", ")}) o'zgarmaydi.`,
+    "",
+    "Amalni orqaga qaytarish tugmasi yo'q. Davom etilsinmi?",
+  ].join("\n");
+  return (
+    <Card title="Ochiq kanallarni ajratish" subtitle="Topshiriqnomaga kiritilmagan kanallar summasi qismdan chiqariladi, qism faol qoladi">
+      <div className="flex items-start gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <div>
+          <p>
+            Ajratiladi: <strong>{royxat}</strong> (jami {sum(jami)} so&apos;m).
+          </p>
+          <p className="mt-1">
+            Biriktirilgan summa {sum(item.asum)} → <strong>{sum(keyin)}</strong> so&apos;m. Qoldiq to&apos;lov hujjatida biriktirilmagan bo&apos;lib qoladi.
+          </p>
+          <p className="mt-1">Topshiriqnomadagi kanallar o&apos;zgarmaydi: {item.blockers.join(", ")}.</p>
+        </div>
+      </div>
+      <div className="flex justify-end px-4 py-3">
+        <form action={detachChannelsAction}>
+          <input type="hidden" name="id" value={item.id} />
+          <ConfirmSubmit
+            message={message}
+            disabled={!yozuvBor}
+            title={!yozuvBor ? "Yozuv ulanishi sozlanmagan" : "Ochiq kanallarni ajratish"}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-sm transition",
+              yozuvBor ? "bg-amber-600 hover:opacity-90" : "bg-slate-300",
+            )}
+          >
+            <Scissors className="h-4 w-4" />
+            Ochiq kanallarni ajratish
+          </ConfirmSubmit>
+        </form>
+      </div>
+    </Card>
   );
 }
 

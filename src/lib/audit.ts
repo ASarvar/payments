@@ -22,6 +22,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   REFRESH_CACHE: "Ma'lumotni yangiladi",
   CANCEL_ATTACHMENT: "Pul biriktirishni bekor qildi",
   CANCEL_ATTACHMENT_FAILED: "Biriktirishni bekor qilish rad etildi",
+  DETACH_CHANNELS: "Ochiq kanallarni ajratdi",
+  DETACH_CHANNELS_FAILED: "Kanallarni ajratish rad etildi",
   CREATE_USER: "Foydalanuvchi qo'shdi",
   RESET_PASSWORD: "Parolni tikladi",
   UPDATE_USER: "Foydalanuvchini o'zgartirdi",

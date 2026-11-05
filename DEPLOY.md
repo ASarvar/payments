@@ -113,8 +113,10 @@ nginx'da (`Strict-Transport-Security`) — TLS o'sha yerda tugaydi.
 
 ## 7. "Pul biriktirish" — yozuv roli (ixtiyoriy)
 
-Ilovaning YAGONA yozuv amali: biriktirishni bekor qilish (`payment_items.state = 0`). Boshqa
-hamma narsa avvalgidek faqat o'qiydi. Rol berilmasa — sahifa ishlaydi, lekin tugma o'chiq turadi.
+Ilovaning yozuv amallari (faqat `payment_items`): biriktirishni bekor qilish (`state = 0`) va
+ochiq kanallarni ajratish (topshiriqnomaga kiritilmagan `*_sum = 0`, `*_accept = false`, `asum` shu summaga kamayadi,
+`state = 1` qoladi). Ikkalasida ham shu tranzaksiyada `payments.parsing_sum` va qism turiga mos ustun
+(`pay_type` 1..10 → `rent_sum` … `other_sum`) o'sha summaga kamayadi. Boshqa hamma narsa avvalgidek faqat o'qiydi. Rol berilmasa — sahifa ishlaydi, lekin tugma o'chiq turadi.
 
 ⚠️ Alohida rol: huquq FAQAT bitta jadval va FAQAT ikki ustunga beriladi — kodda xato bo'lsa ham
 boshqa narsani o'zgartirib bo'lmaydi.
@@ -127,6 +129,15 @@ GRANT CONNECT ON DATABASE project TO payments_rw;
 GRANT USAGE ON SCHEMA public TO payments_rw;
 GRANT SELECT ON public.payment_items TO payments_rw;
 GRANT UPDATE (state, updated_at) ON public.payment_items TO payments_rw;
+GRANT UPDATE (asum, vat_sum, mahalliy_sum, owner_sum, center_sum, madaniy_sum, sport_sum, defense_sum,
+              eco_sum, medicine_sum, penya_sum, jarima_sum, mail_sum,
+              vat_accept, mahalliy_accept, owner_accept, center_accept, madaniy_accept, sport_accept,
+              defence_accept, eco_accept, medicine_accept, penya_accept, jarima_accept, mail_accept)
+      ON public.payment_items TO payments_rw;
+GRANT UPDATE (parsing_sum, no_parsing_sum) ON public.payment_items TO payments_rw;
+GRANT SELECT ON public.payments TO payments_rw;
+GRANT UPDATE (parsing_sum, rent_sum, penya_sum, tax_sum, mail_sum, fine_sum, advance_sum, unknown_sum,
+              returned_sum, returned_sum2, other_sum, updated_at) ON public.payments TO payments_rw;
 GRANT INSERT ON public.audit_log TO payments_rw;
 GRANT USAGE ON SEQUENCE public.audit_log_id_seq TO payments_rw;
 ALTER ROLE payments_rw SET statement_timeout = '60s';
@@ -137,8 +148,9 @@ har o'zgarishni `audit_log` ga yozadi va bu CHAQIRUVCHI rol nomidan bajariladi. 
 yangilash butunlay rad etiladi ("permission denied for table audit_log"). Faqat INSERT beriladi —
 rol auditni o'qiy ham, o'zgartira ham olmaydi; `changed_by` da `payments_rw` ko'rinadi.
 ⚠️ Ikkinchi trigger (`trg_check_payment_items_limit`) `payments` jadvalini faqat `NEW.state = 1`
-yoki `doc_id` o'zgarganda o'qiydi — biz `state = 0` qilamiz, shuning uchun `payments` ga huquq
-KERAK EMAS.
+yoki `doc_id` o'zgarganda o'qiydi. Bekor qilish (`state = 0`) uchun kerak emas, lekin ochiq kanallarni
+ajratishda qism `state = 1` qoladi — trigger `payments` ni o'qiydi, shuning uchun `SELECT` SHART.
+Trigger cheklovi ajratishni rad etsa, xato foydalanuvchiga ko'rsatiladi.
 
 `pg_hba.conf` ga (§2 dagi qator yonida):
 
@@ -166,10 +178,13 @@ RUXSAT YO'Q xatosini berishi kerak. Huquqlar to'liqligini bir so'rovda ko'rish:
 ```sql
 SELECT has_column_privilege('payments_rw','public.payment_items','state','UPDATE') AS pi_state,
        has_table_privilege('payments_rw','public.audit_log','INSERT')              AS audit_insert,
-       has_sequence_privilege('payments_rw','public.audit_log_id_seq','USAGE')     AS audit_seq;
+       has_sequence_privilege('payments_rw','public.audit_log_id_seq','USAGE')     AS audit_seq,
+       has_column_privilege('payments_rw','public.payment_items','asum','UPDATE')  AS pi_asum,
+       has_table_privilege('payments_rw','public.payments','SELECT')               AS payments_sel,
+       has_column_privilege('payments_rw','public.payments','parsing_sum','UPDATE') AS payments_upd;
 ```
 
-Uchalasi ham `t` bo'lishi kerak.
+Hammasi `t` bo'lishi kerak.
 
 ## Yangilash
 

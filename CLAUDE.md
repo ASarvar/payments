@@ -173,6 +173,21 @@ Pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan (`server/services/y
   o'sha tizim auditiga yozadi. Bizda ham har urinish auditda (`CANCEL_ATTACHMENT[_FAILED]`).
 - Yozuv ulanishi yo'q bo'lsa sahifa faqat tekshiradi (tugma o'chiq) — standart holat shu.
 - Qaytarish (state = 1) YO'Q (foydalanuvchi qarori).
+- **Ochiq kanallarni ajratish** (2026-11-05, foydalanuvchi — o'sha tizim egasi — qarori): to'siq bo'lsa,
+  topshiriqnomaga kiritilMAGAN kanallar (`*_sum > 0`, `sent_*` true emas) `*_sum = 0`, `asum` shu summaga
+  kamayadi, `*_accept = false`, `state = 1` qoladi; qoldiq to'lov hujjatida biriktirilmagan bo'ladi
+  (`paydocs` da qoldiq ustuni yo'q — hisoblanadi). Qismning o'z `parsing_sum` (tasdiqlangan kanallar) va
+  `no_parsing_sum` i ham shu farqqa yangilanadi.
+- ⚠️ `payments` SINXRONI (bekor qilish VA ajratish, 2026-11-05): o'sha tizimda `payments.parsing_sum` =
+  faol qismlar `asum` yig'indisi, `payments.<tur>_sum` = shu `pay_type` dagi faol qismlar (dump, 2026-06:
+  99,8% / 99,99%; `pay_type` k → `BIR_TYPES[k-1]`). Shuning uchun shu tranzaksiyada `payments` (pay_id,
+  state = 1) dagi `parsing_sum` va tur ustuni kamaytirilgan summaga kamayadi; faol `payments` 2 ta bo'lsa —
+  rad etiladi. v0.3.8–0.4.2 dagi bekor qilish buni QILMAGAN.
+  To'siqli kanallarni "tiklash" (`sent_* = false`) YO'Q — topshiriqnoma ro'yxatida qism baribir qoladi.
+- ⚠️ Ajratish `SELECT … FOR UPDATE` bilan bir tranzaksiyada: kanallar qulflangan qatordan qayta aniqlanadi.
+  Ikkala tugmada `window.confirm` (`components/ConfirmSubmit.tsx`). Audit: `DETACH_CHANNELS[_FAILED]`
+  (kanallar, `asum` oldin/keyin). Yozuv roliga `asum`, 12 `*_sum`, 12 `*_accept`, `parsing_sum`/`no_parsing_sum` UPDATE va `payments` SELECT + UPDATE kerak
+  (trigger `state = 1` da `payments` ni o'qiydi) — DEPLOY.md §7.
 
 ## Shartnomalar bo'yicha (2026-09-15)
 
@@ -200,7 +215,7 @@ server/services/taqsimot/   BARCHA SQL (taqsimot): hujjat.ts · muammoli.ts · t
                             biriktirish.ts · shared.ts; import — `@/server/services/taqsimot`
 server/services/nazorat.ts  nazorat paneli: kunlik dinamika
 server/services/yonalishlar.ts  yo'nalishlar svodi (SQL'siz — `getRegionMatrix` ustidan)
-server/services/pulBiriktirish.ts  biriktirishni bekor qilish — YAGONA yozuv amali (`writeTx`)
+server/services/pulBiriktirish.ts  biriktirishni bekor qilish va ochiq kanallarni ajratish — YAGONA yozuv joyi (`writeTx`)
 app/dashboard/              nazorat paneli · kanal/[key] · royxat · taqsimot (hujjat/biriktirish/muammoli/
                             takroriy) · shartnomalar · users · audit
 server/services/shartnomalar.ts  BARCHA SQL (shartnomalar bo'yicha): hisoblangan/to'langan/qarzdorlik

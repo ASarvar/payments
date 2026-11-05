@@ -3,6 +3,19 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.4.3 — 2026-11-05
+
+- **Pul biriktirish: ochiq kanallarni ajratish** (foydalanuvchi — o'sha tizim egasi — qarori): qismning
+  bir qismi topshiriqnomaga kiritilgan bo'lsa, kiritilmagan kanallar `*_sum = 0`, `*_accept = false`,
+  `asum` shu summaga kamayadi, qism faol qoladi; qoldiq to'lov hujjatida biriktirilmagan bo'ladi.
+  Qator `FOR UPDATE` bilan qulflanadi, audit — `DETACH_CHANNELS[_FAILED]` (kanallar, `asum` oldin/keyin).
+- **`payments` sinxroni**: bekor qilish va ajratishda shu tranzaksiyada `payments.parsing_sum` va qism
+  turiga mos ustun (`rent_sum` … `other_sum`) kamayadi, qismning `parsing_sum`/`no_parsing_sum` i
+  yangilanadi (o'sha tizimda bu tenglik saqlanadi — dump tahlili, 99,8%).
+- Ikkala tugmada tasdiqlash oynasi (`ConfirmSubmit`).
+- ⚠️ Serverda yozuv roliga yangi huquqlar kerak — DEPLOY.md §7. Dev stub'ga `parsing_sum`/`no_parsing_sum`
+  qo'shildi (`npm run dev:stub` qayta). HTTP testlari qo'shildi, lekin lokal bazasiz ishga tushirilmadi.
+
 ## 0.4.2 — 2026-11-05
 
 - **UI matnlari qisqartirildi** (foydalanuvchi talabi): "Qanday ishlaydi" kartasi (pul biriktirish) va

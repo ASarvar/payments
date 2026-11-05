@@ -51,7 +51,7 @@ export default async function PulBiriktirishPage({ searchParams }: { searchParam
     <div>
       <PageHeader
         title="Pul biriktirish"
-        subtitle="Biriktirish (to'lov qismi) ID si bo'yicha — shartlarni tekshirib, birikishni bekor qilish"
+        subtitle="To'lov qismining shartnomaga biriktirilishini bekor qilish"
       />
 
       <form className="mb-5 flex flex-wrap items-end gap-2 rounded-xl border border-border bg-card p-3 shadow-sm">
@@ -73,14 +73,13 @@ export default async function PulBiriktirishPage({ searchParams }: { searchParam
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            Biriktirish <strong>#{idRaw}</strong> bekor qilindi — qism endi faol emas (<code>state = 0</code>) va
-            hisobotlarga kirmaydi. Pul hujjat bo'yicha biriktirilmagan qoldiqqa qaytadi.
+            Biriktirish <strong>#{idRaw}</strong> bekor qilindi (<code>state = 0</code>).
           </p>
         </div>
       ) : null}
       {natija === "xato" ? <ErrorBox message={sabab ?? "Bekor qilib bo'lmadi."} /> : null}
       {error ? <ErrorBox message={error} /> : null}
-      {notFound ? <ErrorBox message={`#${idRaw} — bunday biriktirish topilmadi.`} /> : null}
+      {notFound ? <ErrorBox message={`#${idRaw} topilmadi.`} /> : null}
 
       {!yozuvBor ? (
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -88,8 +87,7 @@ export default async function PulBiriktirishPage({ searchParams }: { searchParam
           <div>
             <p className="font-semibold">Bekor qilish o&apos;chiq</p>
             <p className="mt-1">
-              Yozuv ulanishi sozlanmagan (<code>PROJECT_WRITE_DATABASE_URL</code>) — sahifa faqat tekshiradi.
-              Serverda rol va huquq berilishi kerak (DEPLOY.md §7).
+              Yozuv ulanishi sozlanmagan (<code>PROJECT_WRITE_DATABASE_URL</code>), faqat tekshirish mumkin.
             </p>
           </div>
         </div>
@@ -97,29 +95,6 @@ export default async function PulBiriktirishPage({ searchParams }: { searchParam
 
       {item ? <ItemView item={item} yozuvBor={yozuvBor} /> : null}
 
-      {!idRaw ? (
-        <Card title="Qanday ishlaydi" subtitle="Bu sahifa to'lovni shartnomaga biriktirishni bekor qiladi">
-          <div className="space-y-2 px-4 py-3 text-[13px] leading-relaxed text-slate-700">
-            <p>
-              <strong>1.</strong> Biriktirish ID sini kiriting — bu <code>payment_items</code> jadvalidagi qism raqami
-              (&quot;To&apos;lovlar ro&apos;yxati&quot;dagi birinchi ustun).
-            </p>
-            <p>
-              <strong>2.</strong> Ilova qismning summasi va 12 kanalga bo&apos;linishini ko&apos;rsatadi hamda har bir
-              kanal uchun pul topshiriqnomaga kiritilgan-kiritilmaganini tekshiradi.
-            </p>
-            <p>
-              <strong>3.</strong> Summasi noldan katta kanallarning birortasi ham topshiriqnomaga kiritilmagan
-              bo&apos;lsa, birikishni bekor qilish mumkin: qism <code>state = 0</code> bo&apos;ladi va hisobotlardan
-              chiqadi. Aks holda tugma ochilmaydi.
-            </p>
-            <p className="text-muted-foreground">
-              Har bir urinish auditga yoziladi. Bekor qilingan qismni qaytarish bu yerda emas — baza yoki eski tizim
-              orqali tuzatiladi.
-            </p>
-          </div>
-        </Card>
-      ) : null}
     </div>
   );
 }
@@ -237,9 +212,9 @@ function ItemView({ item, yozuvBor }: { item: CancelTarget; yozuvBor: boolean })
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
           <p className="text-[12.5px] text-muted-foreground">
             {ok
-              ? "Bekor qilinsa, qism faol bo'lmay qoladi (state = 0) va barcha hisobotlardan chiqadi. Amal auditga yoziladi."
+              ? "Bekor qilinsa, qism state = 0 bo'ladi va hisobotlardan chiqadi."
               : item.active
-                ? "Pul allaqachon topshiriqnomaga kiritilgan — avval o'sha topshiriqnoma hal qilinishi kerak."
+                ? "Pul topshiriqnomaga kiritilgan."
                 : "Bu qism allaqachon faol emas."}
           </p>
           <form action={cancelAttachmentAction}>

@@ -130,7 +130,7 @@ export function UserRow({ u, regions }: { u: UserView; regions: RegionOpt[] }) {
           </button>
         </form>
         <Msg s={upd} />
-        {u.isSelf ? <p className="mt-1 text-[11px] text-muted-foreground">bu — siz</p> : null}
+        {u.isSelf ? <p className="mt-1 text-[11px] text-muted-foreground">siz</p> : null}
       </td>
       <td className="whitespace-nowrap px-3 py-2.5 text-[13px] tabular-nums text-slate-600">{u.lastLogin}</td>
       <td className="px-3 py-2.5">

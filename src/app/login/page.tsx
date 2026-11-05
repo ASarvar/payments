@@ -52,7 +52,7 @@ export default async function LoginPage({
 
         {expired && !error ? (
           <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            Sessiya muddati tugadi yoki parol o&apos;zgartirildi — qayta kiring.
+            Sessiya tugadi. Qayta kiring.
           </p>
         ) : null}
 

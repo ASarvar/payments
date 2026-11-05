@@ -131,7 +131,7 @@ export async function cancelAttachment(id: string): Promise<CancelResult> {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes("PROJECT_WRITE_DATABASE_URL")) return { ok: false, sabab: "Bekor qilish sozlanmagan (yozuv ulanishi yo'q)." };
     const detail = dbMessage(msg);
-    if (/permission denied/i.test(msg)) return { ok: false, sabab: `Bazada ruxsat yo'q — ${detail || "yozuv roliga huquq berilmagan"}.` };
+    if (/permission denied/i.test(msg)) return { ok: false, sabab: `Bazada ruxsat yo'q: ${detail || "yozuv roliga huquq berilmagan"}.` };
     return { ok: false, sabab: `Baza amalni rad etdi${detail ? `: ${detail}` : "."}` };
   }
 
@@ -143,5 +143,5 @@ export async function cancelAttachment(id: string): Promise<CancelResult> {
   if (cur.blockers.length > 0) {
     return { ok: false, sabab: `Topshiriqnomaga kiritilgan: ${cur.blockers.join(", ")}. Bekor qilib bo'lmaydi.` };
   }
-  return { ok: false, sabab: "Amal bajarilmadi — qism shu orada o'zgargan bo'lishi mumkin, sahifani yangilang." };
+  return { ok: false, sabab: "Amal bajarilmadi, qism o'zgargan bo'lishi mumkin. Sahifani yangilang." };
 }

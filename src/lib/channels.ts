@@ -41,8 +41,8 @@ export const HOLATLAR = [
   { key: "tasdiqlanmagan", label: "Tasdiqlanmagan" },
   { key: "otkazilgan", label: "Topshiriqnomaga kiritilgan (jami)" },
   { key: "anomaliya", label: "Tasdiqlanmasdan o'tkazilgan" },
-  { key: "shartnomasiz", label: "O'tkazilmagan — faol shartnomasiz" },
-  { key: "rekvizitsiz", label: "O'tkazilmagan — BS rekvizitisiz" },
+  { key: "shartnomasiz", label: "O'tkazilmagan, faol shartnomasiz" },
+  { key: "rekvizitsiz", label: "O'tkazilmagan, BS rekvizitisiz" },
 ] as const;
 
 export type Holat = (typeof HOLATLAR)[number]["key"];

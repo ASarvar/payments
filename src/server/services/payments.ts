@@ -209,7 +209,7 @@ async function computeRegionMatrix(from: string | undefined, to: string | undefi
       WHERE ${whereSql(filterConds({ from, to }))}
       GROUP BY pi.obl_id`),
   );
-  console.log(`[nazorat] hudud × kanal (${from ?? "…"} — ${to ?? "…"}): ${Date.now() - t0} ms`);
+  console.log(`[nazorat] hudud × kanal (${from ?? "…"} – ${to ?? "…"}): ${Date.now() - t0} ms`);
   const out = rows
     .map((r) => {
       const id = r.id === null || r.id === undefined ? null : Number(r.id);

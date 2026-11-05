@@ -164,7 +164,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       : f.obl !== undefined
         ? regionName(f.obl)
         : "Respublika";
-  const period = `${f.from ? dmy(f.from) : "boshidan"} — ${f.to ? dmy(f.to) : dmy(today)}`;
+  const period = `${f.from ? dmy(f.from) : "boshidan"} – ${f.to ? dmy(f.to) : dmy(today)}`;
 
   return (
     <div>
@@ -177,8 +177,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             {matrix?.lastCreated ? <> · oxirgi biriktirish: {dmy(matrix.lastCreated, true)}</> : null}
             {matrix ? (
               <>
-                {" · "}hisoblangan: {dmy(matrix.computedAt, true)} ({Math.round(PAID_CACHE_SECONDS / 60)} daqiqada yangilanadi,
-                «Yangilash» — darhol)
+                {" · "}hisoblangan: {dmy(matrix.computedAt, true)}
               </>
             ) : null}
           </>
@@ -192,7 +191,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         districts={districts.map((d) => ({ value: String(d.id), label: d.name }))}
       />
 
-      {badDates ? <ErrorBox message="Boshlanish sanasi oxirgi sanadan keyin — sanalarni tekshiring." /> : null}
+      {badDates ? <ErrorBox message="Boshlanish sanasi oxirgi sanadan keyin." /> : null}
       {matrixError.status === "rejected" ? <ErrorBox message={projectErrorMessage(matrixError.reason)} /> : null}
 
       {stages.length > 0 ? (
@@ -200,9 +199,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           title="Pul yo'li"
           subtitle={
             <>
-              Tushgan puldan g&apos;aznachilik to&apos;laguncha — har bosqichda qancha turib qolgani.{" "}
               {f.area !== undefined
-                ? "Tuman tanlangan: kirim (tushum, biriktirish) faqat hudud kesimida bor — ko'rsatilmadi."
+                ? "Tuman tanlangan: tushum va biriktirish faqat hudud kesimida."
                 : !kirim
                   ? "Kirim ma'lumoti olinmadi."
                   : null}
@@ -244,8 +242,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           title="Hududlar svetofori"
           subtitle={
             <>
-              Eng orqada qolgan hudud tepada · summalar mln so&apos;m · hudud tanlovidan qat&apos;i nazar barcha hududlar ·
-              nomini bosing — panel shu hududga o&apos;tadi
+              Mln so&apos;m · barcha hududlar
             </>
           }
         >
@@ -300,8 +297,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           </div>
           <p className="border-t border-border px-4 py-2.5 text-[11.5px] text-muted-foreground">
             <Dot tone="good" /> {LIGHT.good}% va ko&apos;p · <Dot tone="warn" /> {LIGHT.warn}–{LIGHT.good}% ·{" "}
-            <Dot tone="bad" /> {LIGHT.warn}% dan kam. «{LATE_DAYS}+ kun» — taqsimlanganning {LATE_LIGHT.good}% gacha yashil,{" "}
-            {LATE_LIGHT.warn}% gacha sariq. Hudud yonidagi belgi — uchalasining eng yomoni.
+            <Dot tone="bad" /> {LIGHT.warn}% dan kam. «{LATE_DAYS}+ kun»: {LATE_LIGHT.good}% gacha yashil,{" "}
+            {LATE_LIGHT.warn}% gacha sariq.
           </p>
         </Card>
       ) : null}
@@ -313,7 +310,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         <div id="kanallar" className="scroll-mt-4">
           <Card
             title="Kanallar bo'yicha taqsimot"
-            subtitle="Summalar so'mda. Kanal nomini bosing — hududlar kesimi; raqamni bosing — o'sha to'lovlar ro'yxati."
+            subtitle="Summalar so'mda"
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -540,11 +537,11 @@ function Dynamics({ points, scope, area }: { points: DayPoint[]; scope: string; 
   const last = points[points.length - 1]?.d ?? "";
   return (
     <Card
-      title={`Kunlik dinamika — oxirgi ${DYNAMICS_DAYS} kun`}
+      title={`Kunlik dinamika, ${DYNAMICS_DAYS} kun`}
       subtitle={
         <>
-          {scope} · {dmy(first)} — {dmy(last)}
-          {area ? " · tuman tanlangan, dinamika hudud bo'yicha" : null} · ustun ustiga keling — o&apos;sha kun raqamlari
+          {scope} · {dmy(first)} – {dmy(last)}
+          {area ? " · hudud bo'yicha" : null}
         </>
       }
     >

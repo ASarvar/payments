@@ -49,7 +49,7 @@ export async function GET(req: Request) {
   try {
     summary = await getBirDocSummary(sel);
     if (summary.n > env.EXPORT_MAX_ROWS) {
-      return text(`Natija ${summary.n} qator — eksport chegarasi ${env.EXPORT_MAX_ROWS}. Sana oralig'ini toraytiring.`, 400);
+      return text(`Natija ${summary.n} qator, eksport chegarasi ${env.EXPORT_MAX_ROWS}. Sana oralig'ini toraytiring.`, 400);
     }
     docs = await listBirDocs(sel, env.EXPORT_MAX_ROWS);
   } catch (e) {
@@ -82,7 +82,7 @@ export async function GET(req: Request) {
   ws.mergeCells(1, 1, 1, cols);
   const title = ws.getCell(1, 1);
   title.value =
-    `${region.name} bo'yicha ${from ? dmy(from) : "boshidan"} — ${dmy(to)} ijara to'lovlaridan tushgan ` +
+    `${region.name} bo'yicha ${from ? dmy(from) : "boshidan"} – ${dmy(to)} ijara to'lovlaridan tushgan ` +
     "mablag'larning biriktirilishi (so'm)";
   title.font = { bold: true, size: 12 };
   title.alignment = { horizontal: "center", vertical: "middle", wrapText: true };

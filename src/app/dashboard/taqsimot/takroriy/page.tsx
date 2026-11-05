@@ -46,7 +46,7 @@ export default async function DoublePaidPage({ searchParams }: { searchParams: P
     <div>
       <PageHeader
         title="Taqsimot"
-        subtitle="Balansda saqlovchi ulushi g'aznachilikda 2 va undan ko'p marta to'langan qismlar · 1 soatgacha keshlanadi"
+        subtitle="Balansda saqlovchi ulushi g'aznachilikda 2 va undan ko'p marta to'langan qismlar"
       />
       <TaqsimotNav active="takroriy" />
 
@@ -56,13 +56,13 @@ export default async function DoublePaidPage({ searchParams }: { searchParams: P
         <>
           {truncated ? (
             <p className="mb-3 rounded-md bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
-              Natija juda ko&apos;p — faqat ortiqcha summasi eng kattalari ko&apos;rsatilgan ({nf(all.length)} ta).
+              Ortiqcha summasi eng katta {nf(all.length)} tasi ko&apos;rsatilgan.
             </p>
           ) : null}
 
           <Card
             title={`${nf(all.length)} ta qism · ortiqcha to'langan: ${sum(extra)} so'm`}
-            subtitle="Ortiqcha = to'langan topshiriqnomalar summasi − ulush. Qonuniy holat ham bo'lishi mumkin (masalan, ulush bo'lib to'langan) — hujjat sahifasida tekshiring."
+            subtitle="Ortiqcha = to'langan topshiriqnomalar summasi − ulush"
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

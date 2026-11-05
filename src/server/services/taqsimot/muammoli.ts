@@ -10,19 +10,19 @@ export const PROBLEM_KINDS = [
     key: "taqsimlanmagan",
     label: "Taqsimlanmagan",
     sumLabel: "hujjat summasi",
-    hint: "Hujjatning birorta faol qismi yo'q — pul hech bir shartnomaga biriktirilmagan.",
+    hint: "Faol qismi yo'q hujjatlar.",
   },
   {
     key: "qisman",
     label: "Qisman taqsimlangan",
     sumLabel: "taqsimlanmagan qoldiq",
-    hint: "Qismlar yig'indisi hujjat summasidan kam — qoldiq hech kimga biriktirilmagan.",
+    hint: "Qismlar yig'indisi hujjat summasidan kam.",
   },
   {
     key: "ortiqcha",
     label: "Ortiqcha taqsimlangan",
     sumLabel: "ortiqcha",
-    hint: "Qismlar yig'indisi hujjat summasidan KO'P — kelgan puldan ortiq taqsimlangan, tekshirish kerak.",
+    hint: "Qismlar yig'indisi hujjat summasidan ko'p.",
   },
 ] as const;
 export type ProblemKind = (typeof PROBLEM_KINDS)[number]["key"];

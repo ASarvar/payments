@@ -47,7 +47,7 @@ export default async function BirHududPage({ searchParams }: { searchParams: Pro
   let rows: { p: BirPeriod; r: BirRow }[] | null = null;
   let error: string | null = null;
   if (from && from > to) {
-    error = "Boshlanish sanasi oxirgi sanadan keyin — sanalarni tekshiring.";
+    error = "Boshlanish sanasi oxirgi sanadan keyin.";
   } else {
     try {
       const periods = birPeriods(from, to, todayTashkent());
@@ -61,7 +61,7 @@ export default async function BirHududPage({ searchParams }: { searchParams: Pro
 
   const docs = (p: BirPeriod, extra: Record<string, string> = {}) =>
     href(`${BASE}/hujjatlar`, { hudud: region.id, dan: p.from ?? "", gacha: p.to, ...extra });
-  const range = (p: BirPeriod) => (p.from === p.to ? dmy(p.to) : `${p.from ? dmy(p.from) : "boshidan"} — ${dmy(p.to)}`);
+  const range = (p: BirPeriod) => (p.from === p.to ? dmy(p.to) : `${p.from ? dmy(p.from) : "boshidan"} – ${dmy(p.to)}`);
 
   return (
     <div>
@@ -69,8 +69,7 @@ export default async function BirHududPage({ searchParams }: { searchParams: Pro
         title="Taqsimot"
         subtitle={
           <>
-            {region.name} bo&apos;yicha {from ? dmy(from) : "boshidan"} — {dmy(to)} ijara to&apos;lovlaridan tushgan
-            mablag&apos;larning taqsimlanishi
+            {region.name} · {from ? dmy(from) : "boshidan"} – {dmy(to)}
           </>
         }
       />
@@ -83,7 +82,7 @@ export default async function BirHududPage({ searchParams }: { searchParams: Pro
 
       {rows ? (
         <>
-          <Card title={region.name} subtitle="Summalar so'mda · qatorni bosing — o'sha oraliqdagi hujjatlar">
+          <Card title={region.name} subtitle="Summalar so'mda">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>

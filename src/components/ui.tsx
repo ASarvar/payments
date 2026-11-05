@@ -88,7 +88,7 @@ export function NotConfigured() {
         <p className="font-semibold">To&apos;lovlar bazasi sozlanmagan</p>
         <p className="mt-1">
           <code>PROJECT_DATABASE_URL</code> (yoki <code>DB_HOST</code>/<code>DB_NAME</code>/<code>DB_USER</code>/
-          <code>DB_PASSWORD</code>) berilmagan — <code>.env.production.example</code> ga qarang.
+          <code>DB_PASSWORD</code>) berilmagan.
         </p>
       </div>
     </div>

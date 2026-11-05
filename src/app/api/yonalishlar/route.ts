@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 
   await audit(user.id, "EXPORT_YONALISHLAR", { dan: f.from ?? null, gacha: f.to ?? null, hudud: f.obl ?? null });
 
-  const period = `${f.from ? dmy(f.from) : "boshidan"} — ${f.to ? dmy(f.to) : dmy(nowTashkent().slice(0, 10))}`;
+  const period = `${f.from ? dmy(f.from) : "boshidan"} – ${f.to ? dmy(f.to) : dmy(nowTashkent().slice(0, 10))}`;
   const wb = new ExcelJS.Workbook();
   const navy = "FF07102B";
   const gold = "FFF7F1E4";

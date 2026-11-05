@@ -72,7 +72,7 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
   let pages = 1;
   let p = 1;
   if (from && from > to) {
-    error = "Boshlanish sanasi oxirgi sanadan keyin — sanalarni tekshiring.";
+    error = "Boshlanish sanasi oxirgi sanadan keyin.";
   } else {
     try {
       summary = await getBirDocSummary(sel);
@@ -100,7 +100,7 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
 
   const base = { hudud: region.id, dan: from ?? "", gacha: to, holat: holat === "hammasi" ? undefined : holat, tur };
   const pageHref = (x: number) => href(`${BASE}/hujjatlar`, { ...base, p: x > 1 ? x : undefined });
-  const period = `${from ? dmy(from) : "boshidan"} — ${dmy(to)}`;
+  const period = `${from ? dmy(from) : "boshidan"} – ${dmy(to)}`;
 
   return (
     <div>
@@ -147,7 +147,7 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
               <>
                 Tushum <strong>{sum(summary.tushum)}</strong> · biriktirilgan {sum(summary.biriktirilgan)} · biriktirilmagan{" "}
                 <span className={cn(Math.abs(summary.farq) >= 0.5 && "font-semibold text-red-700")}>{sum(summary.farq)}</span>{" "}
-                so&apos;m · qatorni bosing — kanallar bo&apos;yicha taqsimot, ID ni bosing — to&apos;liq sahifa
+                so&apos;m
               </>
             }
           >
@@ -270,7 +270,7 @@ export default async function BirDocsPage({ searchParams }: { searchParams: Prom
                                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
                                   <div>
                                     <p className="text-[13px] font-semibold" style={{ color: "var(--navy)" }}>
-                                      Kanallar bo&apos;yicha — hujjat #{d.id}
+                                      Hujjat #{d.id}, kanallar bo&apos;yicha
                                     </p>
                                     <p className="mt-0.5 text-[12px] text-muted-foreground">
                                       {openDist ? <ChannelsSubtitle d={openDist} /> : (openError ?? "Hujjat topilmadi.")}

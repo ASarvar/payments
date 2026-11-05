@@ -148,7 +148,7 @@ export async function GET(req: Request) {
       s.id,
       s.channelLabel,
       s.receiverName,
-      `${dmy(s.dateFrom)} — ${dmy(s.dateTo)}`,
+      `${dmy(s.dateFrom)} – ${dmy(s.dateTo)}`,
       sendState(s.status, s.uzasboStatus).label,
       s.uzasboStatus,
       s.reason,
@@ -163,7 +163,7 @@ export async function GET(req: Request) {
         ? "asosiy"
         : s.role === "tarix"
           ? "tarix (rad etilgan / qayta yaratilgan)"
-          : "takroriy ro'yxat — summaga kirmaydi",
+          : "takroriy ro'yxat, summaga kirmaydi",
     ]);
   }
 

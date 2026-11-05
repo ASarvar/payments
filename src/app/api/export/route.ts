@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     return text(projectErrorMessage(e), 502);
   }
   if (summary.n > env.EXPORT_MAX_ROWS) {
-    return text(`Natija ${summary.n} qator — eksport chegarasi ${env.EXPORT_MAX_ROWS}. Filtrni toraytiring.`, 400);
+    return text(`Natija ${summary.n} qator, eksport chegarasi ${env.EXPORT_MAX_ROWS}. Filtrni toraytiring.`, 400);
   }
 
   await audit(user.id, "EXPORT", {

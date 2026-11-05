@@ -3,6 +3,14 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.4.2 — 2026-11-05
+
+- **UI matnlari qisqartirildi** (foydalanuvchi talabi): "Qanday ishlaydi" kartasi (pul biriktirish) va
+  taqsimotdagi kirish matni olib tashlandi; "nomini bosing — …", "qatorni bosing — …" ko'rsatmalari,
+  kesh izohlari va sarlavha osti tushuntirishlari o'chirildi; xato va ogohlantirish matnlari qisqardi;
+  sarlavhalardagi "—" o'rnida ":" yoki vergul, sana oralig'ida "–". Excel hisobot sarlavhalari o'zgarmadi.
+  HTTP testlaridagi 3 ta matn tekshiruvi yangilandi.
+
 ## 0.4.1 — 2026-11-05
 
 - **Sahifalardagi tushuntirish matnlari olib tashlandi** (foydalanuvchi talabi): jadval ostidagi

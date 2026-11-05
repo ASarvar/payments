@@ -40,7 +40,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
     return (
       <>
         <PageHeader title="To'lovlar ro'yxati" />
-        <ErrorBox message="Sizga hudud biriktirilmagan — super adminga murojaat qiling." />
+        <ErrorBox message="Sizga hudud biriktirilmagan. Super adminga murojaat qiling." />
       </>
     );
   }
@@ -114,7 +114,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
           right={
             tooBig ? (
               <span className="text-[12px] text-amber-800">
-                Eksport uchun juda ko&apos;p ({nf(env.EXPORT_MAX_ROWS)} dan ortiq) — filtrni toraytiring
+                Eksport chegarasi {nf(env.EXPORT_MAX_ROWS)} qator
               </span>
             ) : (
               <a

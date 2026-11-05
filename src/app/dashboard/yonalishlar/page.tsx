@@ -37,7 +37,7 @@ export default async function YonalishlarPage({ searchParams }: { searchParams: 
   const fp = filterParams(f);
   const listHref = (kanal: string, holat: string) => href("/dashboard/royxat", { kanal, holat, ...fp });
   const scope = f.obl !== undefined ? (regions.find((r) => r.id === f.obl)?.name ?? `#${f.obl}`) : "Respublika";
-  const period = `${f.from ? dmy(f.from) : "boshidan"} — ${f.to ? dmy(f.to) : "bugungacha"}`;
+  const period = `${f.from ? dmy(f.from) : "boshidan"} – ${f.to ? dmy(f.to) : "bugungacha"}`;
 
   return (
     <div>
@@ -49,7 +49,7 @@ export default async function YonalishlarPage({ searchParams }: { searchParams: 
             {!parsed.danExplicit ? <> (standart boshlanish sanasi)</> : null}
             {d ? (
               <>
-                {" · "}hisoblangan: {dmy(d.computedAt, true)} ({Math.round(PAID_CACHE_SECONDS / 60)} daqiqada yangilanadi)
+                {" · "}hisoblangan: {dmy(d.computedAt, true)}
               </>
             ) : null}
           </>
@@ -62,7 +62,7 @@ export default async function YonalishlarPage({ searchParams }: { searchParams: 
         regions={regions.map((r) => ({ value: String(r.id), label: r.name }))}
       />
 
-      {badDates ? <ErrorBox message="Boshlanish sanasi oxirgi sanadan keyin — sanalarni tekshiring." /> : null}
+      {badDates ? <ErrorBox message="Boshlanish sanasi oxirgi sanadan keyin." /> : null}
       {dataR.status === "rejected" ? <ErrorBox message={projectErrorMessage(dataR.reason)} /> : null}
 
       {d ? (
@@ -93,7 +93,7 @@ export default async function YonalishlarPage({ searchParams }: { searchParams: 
 
           <Card
             title="Yo'nalishlar bo'yicha"
-            subtitle="Summalar so'mda · «Chiqishi kerak» = hisoblangan − to'langan; o'ng tomondagi uch ustun uning tarkibi · raqamni bosing — ro'yxat"
+            subtitle="Summalar so'mda · «Chiqishi kerak» = hisoblangan − to'langan"
             right={<ExcelLink href={href("/api/yonalishlar", fp)} />}
           >
             <div className="overflow-x-auto">
@@ -139,8 +139,8 @@ export default async function YonalishlarPage({ searchParams }: { searchParams: 
           </Card>
 
           <Card
-            title="Yo'nalish × hudud — chiqishi kerak bo'lgan summa"
-            subtitle="Mln so'm · hudud tanlovidan qat'i nazar barcha hududlar · hudud nomini bosing — yuqoridagi jadval shu hududga o'tadi"
+            title="Yo'nalish × hudud: chiqishi kerak"
+            subtitle="Mln so'm · barcha hududlar"
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

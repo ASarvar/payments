@@ -128,12 +128,12 @@ export default async function ChannelPage({
             {f.from || f.to ? (
               <>
                 {" "}
-                · {f.from ? dmy(f.from) : "…"} — {f.to ? dmy(f.to) : "…"}
+                · {f.from ? dmy(f.from) : "…"} – {f.to ? dmy(f.to) : "…"}
               </>
             ) : (
               <> · barcha davr</>
             )}
-            {!parsed.danExplicit ? <> (standart boshlanish sanasi — o&apos;zgartirish mumkin)</> : null}
+            {!parsed.danExplicit ? <> (standart boshlanish sanasi)</> : null}
             {computedAt ? <> · hisoblangan: {dmy(computedAt, true)}</> : null}
           </>
         }
@@ -205,14 +205,14 @@ export default async function ChannelPage({
               href={listHref()("anomaliya")}
             />
             <IssueTile
-              title="O'tkazilmagan — faol shartnomasiz"
+              title="O'tkazilmagan, faol shartnomasiz"
               n={issues?.shartnomasiz.n}
               s={issues?.shartnomasiz.s}
               href={listHref()("shartnomasiz")}
               failed={issuesR.status === "rejected" ? projectErrorMessage(issuesR.reason) : undefined}
             />
             <IssueTile
-              title="O'tkazilmagan — BS hisob raqami/MFO yo'q"
+              title="O'tkazilmagan, BS hisob raqami/MFO yo'q"
               n={issues?.rekvizitsiz.n}
               s={issues?.rekvizitsiz.s}
               href={listHref()("rekvizitsiz")}
@@ -220,7 +220,7 @@ export default async function ChannelPage({
             />
           </div>
 
-          <Card title="Hududlar bo'yicha" subtitle="Hudud nomini bosing — tumanlar ochiladi. Summalar so'mda.">
+          <Card title="Hududlar bo'yicha" subtitle="Summalar so'mda">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -264,7 +264,7 @@ export default async function ChannelPage({
 
           <Card
             title="O'tkazilmagan summaning yoshi"
-            subtitle="To'lov sanasidan bugungacha o'tgan kun bo'yicha — qaysi hududda pul uzoq turib qolgani."
+            subtitle="To'lov sanasidan o'tgan kunlar"
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

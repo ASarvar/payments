@@ -26,7 +26,7 @@ export default async function run(t) {
 
   const html = await (await get("/dashboard/yonalishlar", A)).text();
   const page = unesc(norm(html));
-  t.check("ikkala jadval", page.includes("Yo'nalishlarbo'yicha") && page.includes("Yo'nalish×hudud—chiqishikerakbo'lgansumma"));
+  t.check("ikkala jadval", page.includes("Yo'nalishlarbo'yicha") && page.includes("Yo'nalish×hudud:chiqishikerak"));
 
   const j = rowCells(html, "JAMI");
   t.check("JAMI hisoblangan = baza", j[1] === sum(tot("jami")), `${j[1]} / ${sum(tot("jami"))}`);

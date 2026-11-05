@@ -76,12 +76,12 @@ export default async function ProblemsPage({ searchParams }: { searchParams: Pro
             {f.from || f.to ? (
               <>
                 {" "}
-                · {f.from ? dmy(f.from) : "…"} — {f.to ? dmy(f.to) : "…"}
+                · {f.from ? dmy(f.from) : "…"} – {f.to ? dmy(f.to) : "…"}
               </>
             ) : (
               <> · barcha davr</>
             )}
-            {!danExplicit ? <> (standart boshlanish sanasi — o&apos;zgartirish mumkin)</> : null}
+            {!danExplicit ? <> (standart boshlanish sanasi)</> : null}
           </>
         }
       />
@@ -127,7 +127,7 @@ export default async function ProblemsPage({ searchParams }: { searchParams: Pro
             Filtrdagi faol hujjatlar: {nf(summary.docs.n)} ta · {sum(summary.docs.s)} so&apos;m. {meta.hint}
           </p>
 
-          <Card title={`${meta.label} — ${nf(summary.kinds[kind].n)} ta`} subtitle="Hujjat ID sini bosing — taqsimot tafsiloti ochiladi.">
+          <Card title={`${meta.label}: ${nf(summary.kinds[kind].n)} ta`}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>

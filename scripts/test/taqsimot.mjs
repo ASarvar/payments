@@ -21,7 +21,7 @@ export default async function run(t) {
   let html = await (await get(`/dashboard/taqsimot?id=${doc.id}`, A)).text();
   let page = unesc(norm(html));
   t.check("hujjat sarlavhasi", page.includes(`Hujjat#${doc.id}`));
-  t.check("qismlar soni", page.includes(`Qismlar—${doc.items}ta`), String(doc.items));
+  t.check("qismlar soni", page.includes(`Qismlar:${doc.items}ta`), String(doc.items));
   t.check("kanallarga taqsimlangan = baza", page.includes(`Kanallargataqsimlanganjami:<strong>${sum(shares.s)}</strong>`), sum(shares.s));
   const shown = Number(page.match(/topshiriqnomalar—(\d+)ta/)?.[1] ?? -1);
   t.check("topshiriqnomalar (ko'rsatilgan <= jami)", shown > 0 && shown <= sendCount.n, `${shown} / ${sendCount.n}`);
@@ -96,11 +96,11 @@ export default async function run(t) {
   if (openId) {
     const [openShares] = await ro(`SELECT (${sharesSql})::float8 AS s FROM payment_items WHERE state = 1 AND pay_id = ${openId}`);
     const opened = unesc(norm(await (await get(`/dashboard/taqsimot/biriktirish/hujjatlar?${q}&ochiq=${openId}`, A)).text()));
-    t.check("ochilgan panel: sarlavha", opened.includes(`Kanallarbo'yicha—hujjat#${openId}`));
+    t.check("ochilgan panel: sarlavha", opened.includes(`Hujjat#${openId},kanallarbo'yicha`));
     t.check("ochilgan panel: summa = baza", opened.includes(`Kanallargataqsimlanganjami:<strong>${sum(openShares.s)}</strong>`), sum(openShares.s));
   }
   const ghost = unesc(norm(await (await get(`/dashboard/taqsimot/biriktirish/hujjatlar?${q}&ochiq=999999999`, A)).text()));
-  t.check("sahifada yo'q ID: panel ochilmaydi", !ghost.includes("Kanallarbo'yicha—hujjat"));
+  t.check("sahifada yo'q ID: panel ochilmaydi", !ghost.includes(",kanallarbo'yicha"));
 
   const re = await get(`/api/taqsimot?id=${doc.id}`, A);
   t.check("hujjat Excel 200", re.status === 200, String(re.status));

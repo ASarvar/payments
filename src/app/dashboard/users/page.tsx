@@ -38,8 +38,7 @@ export default async function UsersPage() {
       </h1>
       {regionsOrNull === null ? (
         <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
-          Hududlar ro&apos;yxatini to&apos;lovlar bazasidan olib bo&apos;lmadi — hozircha moderator qo&apos;shib yoki
-          hududini o&apos;zgartirib bo&apos;lmaydi.
+          Hududlar ro&apos;yxati olinmadi. Moderator qo&apos;shib yoki hududini o&apos;zgartirib bo&apos;lmaydi.
         </p>
       ) : null}
 
@@ -47,7 +46,7 @@ export default async function UsersPage() {
         <CreateUserForm regions={regions} />
       </Card>
 
-      <Card title={`Ro'yxat — ${users.length} ta`}>
+      <Card title={`Ro'yxat: ${users.length} ta`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

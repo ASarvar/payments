@@ -54,7 +54,7 @@ export async function writeTx<T>(fn: (tx: Prisma.TransactionClient) => Promise<T
 export function projectErrorMessage(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
   if (msg.includes("statement timeout")) {
-    return "So'rov juda uzoq davom etdi va to'xtatildi — sana oralig'ini yoki hududni toraytiring.";
+    return "So'rov vaqti tugadi. Sana oralig'ini yoki hududni toraytiring.";
   }
   if (msg.includes("PROJECT_DATABASE_URL")) return "To'lovlar bazasiga ulanish sozlanmagan (PROJECT_DATABASE_URL).";
   if (msg.includes("Can't reach database") || msg.includes("ECONNREFUSED")) {

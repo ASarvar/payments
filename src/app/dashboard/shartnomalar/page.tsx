@@ -95,7 +95,7 @@ export default async function ShartnomalarPage({ searchParams }: { searchParams:
 
           <Card
             title="Hududlar bo'yicha"
-            subtitle={`Summalar mln so'mda · «bir kunda» — bugun (${dmy(today)})`}
+            subtitle={`Summalar mln so'mda · «bir kunda»: ${dmy(today)}`}
             right={<ExcelLink href={href("/api/shartnomalar", { yil: year })} />}
           >
             <div className="overflow-x-auto">

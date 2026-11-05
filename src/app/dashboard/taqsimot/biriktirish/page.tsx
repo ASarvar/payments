@@ -36,7 +36,7 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
   let rows: BirRow[] | null = null;
   let error: string | null = null;
   if (from && from > to) {
-    error = "Boshlanish sanasi oxirgi sanadan keyin — sanalarni tekshiring.";
+    error = "Boshlanish sanasi oxirgi sanadan keyin.";
   } else {
     try {
       rows = await getBiriktirish(from, to);
@@ -46,7 +46,7 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
     }
   }
   const total = rows ? totalBir(rows) : null;
-  const period = `${from ? dmy(from) : "boshidan"} — ${dmy(to)}`;
+  const period = `${from ? dmy(from) : "boshidan"} – ${dmy(to)}`;
   const q = { dan: from ?? "", gacha: to };
   const hududHref = (obl: number) => href(`${PATH}/hudud`, { hudud: obl, ...q });
   const docsHref = (obl: number, extra: Record<string, string> = {}) => href(`${PATH}/hujjatlar`, { hudud: obl, ...q, ...extra });
@@ -58,7 +58,7 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
         subtitle={
           <>
             Ijara to&apos;lovlaridan tushgan mablag&apos;lar biriktirilishining borishi · {period}
-            {!danExplicit ? <> (standart boshlanish sanasi — o&apos;zgartirish mumkin)</> : null}
+            {!danExplicit ? <> (standart boshlanish sanasi)</> : null}
           </>
         }
       />
@@ -97,7 +97,7 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
 
           <Card
             title="Hududlar bo'yicha"
-            subtitle={`Summalar mln so'mda · «Bir kunda» — ${dmy(to)} · hudud nomini bosing — davrlar kesimi, raqamni bosing — hujjatlar`}
+            subtitle={`Summalar mln so'mda · «Bir kunda»: ${dmy(to)}`}
             right={
               <a
                 href={withBase(href("/api/taqsimot/biriktirish", q))}
@@ -140,7 +140,7 @@ export default async function BiriktirishPage({ searchParams }: { searchParams: 
                         {t.label}
                       </th>
                     ))}
-                    <th className={thR} title="MUNIS orqali biriktirilgan — asl hisobotda turlarga bo'linmaydi">
+                    <th className={thR} title="MUNIS orqali biriktirilgan, turlarga bo'linmaydi">
                       MUNIS orqali
                     </th>
                   </tr>

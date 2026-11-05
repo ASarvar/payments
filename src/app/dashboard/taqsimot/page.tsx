@@ -86,28 +86,12 @@ export default async function TaqsimotPage({ searchParams }: { searchParams: Pro
 
       {raw && !id ? <ErrorBox message="ID faqat raqamlardan iborat bo'lishi kerak." /> : null}
       {error ? <ErrorBox message={error} /> : null}
-      {missing ? <ErrorBox message={`#${id} topilmadi — na to'lov hujjatlari, na biriktirishlar orasida yo'q.`} /> : null}
-      {!raw ? <Intro /> : null}
+      {missing ? <ErrorBox message={`#${id} topilmadi.`} /> : null}
       {dist ? <DistributionView d={dist} qism={qism} /> : null}
     </div>
   );
 }
 
-function Intro() {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 text-[13px] leading-relaxed text-slate-600 shadow-sm">
-      <p>
-        To&apos;lov hujjati ID sini kiriting (<code>paydocs.id</code> — bankdan kelgan to&apos;lov). Sahifa hujjat qaysi
-        shartnomalarga biriktirilgani, har bir qism 12 kanalga qanday bo&apos;lingani va har bir ulush g&apos;aznachilikka
-        topshiriqnoma bilan yuborilib, to&apos;langan-to&apos;lanmaganini ko&apos;rsatadi.
-      </p>
-      <p className="mt-2">
-        ID ni &quot;To&apos;lovlar ro&apos;yxati&quot;dan olish mumkin — qatordagi <strong>to&apos;lov #…</strong> havolasi
-        shu sahifani ochadi. Biriktirish ID si kiritilsa, uning hujjatiga o&apos;tiladi.
-      </p>
-    </div>
-  );
-}
 
 function Field({ label, value, wide }: { label: string; value: ReactNode; wide?: boolean }) {
   return (
@@ -134,7 +118,7 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
             {doc.type ?? "—"} · № {doc.docNum ?? "—"} · {dmy(doc.docDate)}
             {!doc.active ? (
               <span className="ml-2 rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-700">
-                faol emas (state ≠ 1) — hisobotlarga kirmaydi
+                faol emas (state ≠ 1)
               </span>
             ) : null}
           </>
@@ -170,7 +154,7 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
         <KpiCard
           label={remainder < 0 ? "Ortiqcha taqsimlangan" : "Taqsimlanmagan qoldiq"}
           {...money(Math.abs(remainder))}
-          footer={balanced ? "hujjat to'liq taqsimlangan" : "hujjat summasi bilan qismlar yig'indisi farqi — tekshirish kerak"}
+          footer={balanced ? "hujjat to'liq taqsimlangan" : "qismlar yig'indisi hujjat summasiga teng emas"}
           accent={balanced ? "#15803d" : "#b91c1c"}
           icon={Scale}
         />
@@ -187,7 +171,7 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
         <ChannelsTable d={d} />
       </Card>
 
-      <Card title={`Qismlar — ${nf(d.items.length)} ta`} subtitle="Hujjat qaysi shartnomalarga biriktirilgan va har bir ulush qaysi bosqichda.">
+      <Card title={`Qismlar: ${nf(d.items.length)} ta`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -204,7 +188,7 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
               {d.items.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">
-                    Hujjat birorta shartnomaga biriktirilmagan — pul taqsimlanmagan.
+                    Hujjat shartnomaga biriktirilmagan.
                   </td>
                 </tr>
               ) : (
@@ -215,7 +199,7 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
                   >
                     <td className={`${td} tabular-nums`}>
                       <div className="font-medium text-slate-800">{it.id}</div>
-                      {!it.active ? <div className="text-[11px] text-red-700">bekor (state ≠ 1) — sanalmaydi</div> : null}
+                      {!it.active ? <div className="text-[11px] text-red-700">bekor (state ≠ 1)</div> : null}
                       {it.id === qism ? <div className="text-[11px] text-amber-800">siz qidirgan biriktirish</div> : null}
                     </td>
                     <td className={`${td} whitespace-nowrap tabular-nums`}>{dmy(it.createdAt, true)}</td>
@@ -257,13 +241,12 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
           <Chip tone="wait">topshiriqnomaga kiritilgan, to&apos;lanmagan</Chip>
           <Chip tone="ok">g&apos;aznachilikda to&apos;langan</Chip>
           <Chip tone="bad">ikki marta to&apos;langan / tasdiqlanmasdan kiritilgan</Chip>
-          <span>— sichqonchani ustiga olib boring.</span>
         </div>
       </Card>
 
       <Card
-        title={`G'aznachilikka topshiriqnomalar — ${nf(shownSends.length)} ta`}
-        subtitle="Bitta topshiriqnoma bir oluvchiga bir davr uchun ko'p qismni birlashtiradi. «Hujjat ulushi» — shu hujjat ulushlaridan aynan shu topshiriqnoma to'lagani."
+        title={`G'aznachilikka topshiriqnomalar: ${nf(shownSends.length)} ta`}
+        subtitle="«Hujjat ulushi»: shu hujjat ulushlaridan shu topshiriqnoma to'lagan summa"
       >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -302,7 +285,7 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
                         <div className="line-clamp-2 text-[12px] text-muted-foreground">{s.receiverName ?? "—"}</div>
                       </td>
                       <td className={`${td} whitespace-nowrap tabular-nums`}>
-                        {dmy(s.dateFrom)} — {dmy(s.dateTo)}
+                        {dmy(s.dateFrom)} – {dmy(s.dateTo)}
                       </td>
                       <td className={`${td} max-w-[260px]`}>
                         <Chip tone={st.tone}>{st.label}</Chip>
@@ -323,8 +306,7 @@ function DistributionView({ d, qism }: { d: Distribution; qism?: string }) {
         </div>
         {repeatSends > 0 ? (
           <p className="border-t border-border px-4 py-2.5 text-[12px] text-muted-foreground">
-            Yana {nf(repeatSends)} ta topshiriqnoma bu qismlarni ro&apos;yxatida qayta keltirgan: ularning ro&apos;yxati davr
-            boshidan to&apos;planadi, summasi esa faqat yangi qismlar uchun — shu hujjat summasiga kirmaydi (Excel&apos;da bor).
+            Yana {nf(repeatSends)} ta takroriy topshiriqnoma bor (summaga kirmaydi, Excel&apos;da ko&apos;rsatilgan).
           </p>
         ) : null}
       </Card>

@@ -3,6 +3,17 @@
 Faqat kod ichida — ilova UI'sida ko'rsatilmaydi. `package.json`dagi `version` git'ga
 push qilinganda oshiriladi. Shu paytgacha to'plangan o'zgarishlar "Chiqarilmagan"da.
 
+## 0.5.0 — 2026-11-06
+
+- **Rollarga qarab sahifalarga kirish** (foydalanuvchi qarori): super admin "Foydalanuvchilar → Rollar"
+  bo'limida har rol (administrator, hudud va respublika moderatori) uchun sahifalarni belgilaydi.
+  Sahifalar ro'yxati — `lib/pages.ts`, saqlanadi — o'z bazamizdagi `RolePageAccess` (yangi migratsiya).
+  Qator bo'lmasa — avvalgi tartib: administrator hammasi, moderatorlar faqat "To'lovlar ro'yxati".
+- Himoya bitta joyda (`lib/authz.ts`): sahifalar `requirePage`, Excel route'lari `requirePageApi`,
+  server action'lar `requirePageAction`. Ruxsat yo'q sahifa — birinchi ruxsat berilgan sahifaga.
+  Menyu ham shu ro'yxatdan. Moderator hudud cheklovi (`scopeFilters`) o'zgarmadi.
+- Audit: `UPDATE_ROLE_ACCESS` (oldin/keyin).
+
 ## 0.4.3 — 2026-11-05
 
 - **Pul biriktirish: ochiq kanallarni ajratish** (foydalanuvchi — o'sha tizim egasi — qarori): qismning

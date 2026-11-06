@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, filterParams, href, type SP } from "@/lib/filters";
 import { PAID_CACHE_SECONDS } from "@/server/services/uzasboSql";
@@ -39,7 +39,7 @@ const sumChannels = (r: RegionMatrixRow): Metrics =>
   Object.values(r.channels).reduce((a, m) => addMetrics(a, m), emptyMetrics());
 
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("dashboard");
   if (!projectConfigured()) {
     return (
       <>

@@ -2,7 +2,7 @@
 
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/authz";
+import { requirePageAction } from "@/lib/authz";
 import { audit } from "@/lib/audit";
 import { href } from "@/lib/filters";
 import { PAYMENTS_CACHE_TAG } from "@/server/services/payments";
@@ -10,7 +10,7 @@ import { clearUnpaidCache } from "@/server/services/unpaidItems";
 import { cancelAttachment, detachOpenChannels } from "@/server/services/pulBiriktirish";
 
 export async function cancelAttachmentAction(formData: FormData): Promise<void> {
-  const user = await requireAdmin();
+  const user = await requirePageAction("pul-biriktirish");
   const id = String(formData.get("id") ?? "").trim();
 
   const res = await cancelAttachment(id);
@@ -25,7 +25,7 @@ export async function cancelAttachmentAction(formData: FormData): Promise<void> 
 }
 
 export async function detachChannelsAction(formData: FormData): Promise<void> {
-  const user = await requireAdmin();
+  const user = await requirePageAction("pul-biriktirish");
   const id = String(formData.get("id") ?? "").trim();
 
   const res = await detachOpenChannels(id);

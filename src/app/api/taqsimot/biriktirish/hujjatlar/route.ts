@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { getCurrentUser, isModerator } from "@/lib/authz";
+import { requirePageApi } from "@/lib/authz";
 import { audit } from "@/lib/audit";
 import { env } from "@/lib/env";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
@@ -20,9 +20,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const user = await getCurrentUser();
-  if (!user) return new Response("Avtorizatsiya talab qilinadi", { status: 401 });
-  if (isModerator(user)) return text("Ruxsat yo'q", 403);
+  const user = await requirePageApi("taqsimot");
+  if (user instanceof Response) return user;
   if (!projectConfigured()) return text("To'lovlar bazasi sozlanmagan", 503);
 
   const sp = Object.fromEntries(new URL(req.url).searchParams) as SP;

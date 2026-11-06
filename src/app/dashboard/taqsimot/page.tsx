@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { Banknote, FileDown, Landmark, Scale, Search, Split } from "lucide-react";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { CHANNELS } from "@/lib/channels";
 import { href, one, type SP } from "@/lib/filters";
@@ -18,7 +18,7 @@ import { ChannelsSubtitle, ChannelsTable, Chip, TaqsimotNav } from "./parts";
 const ID_RE = /^\d{1,18}$/;
 
 export default async function TaqsimotPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("taqsimot");
   if (!projectConfigured()) {
     return (
       <>

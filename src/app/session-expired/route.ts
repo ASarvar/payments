@@ -4,6 +4,6 @@ import { getCurrentUser } from "@/lib/authz";
 import { withBase } from "@/lib/basePath";
 
 export async function GET() {
-  if (await getCurrentUser()) redirect("/dashboard");
+  if (await getCurrentUser()) redirect("/");
   await signOut({ redirectTo: withBase("/login?expired=1") });
 }

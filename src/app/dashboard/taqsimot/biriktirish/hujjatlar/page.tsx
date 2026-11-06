@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Fragment } from "react";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, href, one, type SP } from "@/lib/filters";
 import { PAGE_SIZE, getRegions, type Option } from "@/server/services/payments";
@@ -29,7 +29,7 @@ import { ChannelsSubtitle, ChannelsTable, Crumbs, Pager, TaqsimotNav } from "../
 const BASE = "/dashboard/taqsimot/biriktirish";
 
 export default async function BirDocsPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("taqsimot");
   if (!projectConfigured()) {
     return (
       <>

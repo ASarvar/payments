@@ -1,5 +1,5 @@
 import { Banknote, CheckCircle2, FileText, Scale, Search } from "lucide-react";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { href, one, type SP } from "@/lib/filters";
 import { FIRST_YEAR, getShartnomalar, totalSh, type ShRow, type ShTriple } from "@/server/services/shartnomalar";
@@ -12,7 +12,7 @@ import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, 
 const groupTh = `${th} border-l border-border text-center`;
 
 export default async function ShartnomalarPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("shartnomalar");
   if (!projectConfigured()) {
     return (
       <>

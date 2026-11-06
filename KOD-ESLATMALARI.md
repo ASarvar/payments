@@ -30,6 +30,13 @@ foydalanuvchini tizimdan chiqarib yuborardi.
 - `requireSuperAdminPage()` — `notFound()`, `throw` emas: production'da xato matni o'chiriladi va
   foydalanuvchi tushunarsiz xato sahifasini ko'rardi.
 - Rol va hudud JWT'dan emas, har so'rovda bazadan (`cache()` — bir so'rovda bitta o'qish).
+- `getAllowedPages()` — `cache()` ROL bo'yicha; SUPER_ADMIN bazaga murojaat qilmaydi. Qator (rol, sahifa)
+  bo'yicha birlashtiriladi: `PAGES` ga yangi kalit qo'shilsa, saqlangan rollar uchun u `DEFAULT_ACCESS` dan oladi.
+- `requirePage()` ruxsat bo'lmasa `homeOf()` ga yuboradi — u FAQAT ruxsat berilgan sahifa, shuning uchun
+  redirect aylanmaydi; birorta sahifa yo'q bo'lsa 404 (layout `requireUserOrRedirect()` bilan, sahifasiz).
+
+**`src/app/dashboard/users/rollar/actions.ts`** — 3 rol × barcha sahifa qatorlari to'liq qayta yoziladi
+(`allowed = false` ham saqlanadi: aks holda belgisi olingan sahifa standartga qaytib qolardi).
 
 **`src/app/dashboard/users/actions.ts`** — moderator hududida FK yo'q (hududlar `project` bazasida),
 shuning uchun faqat YANGI id haqiqiy ro'yxat bo'yicha tekshiriladi; o'zgarmagan hudud

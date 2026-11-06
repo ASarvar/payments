@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Sigma, Landmark, Hourglass } from "lucide-react";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, filterParams, href, type SP } from "@/lib/filters";
 import { getRegions, type PaymentFilters } from "@/server/services/payments";
@@ -14,7 +14,7 @@ import { ExcelLink } from "@/components/ExcelLink";
 import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, totalStyle } from "@/components/ui";
 
 export default async function YonalishlarPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("yonalishlar");
   if (!projectConfigured()) {
     return (
       <>

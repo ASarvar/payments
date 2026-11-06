@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, href, type SP } from "@/lib/filters";
 import { getRegions, type Option } from "@/server/services/payments";
@@ -13,7 +13,7 @@ import { Crumbs, TaqsimotNav } from "../../parts";
 const BASE = "/dashboard/taqsimot/biriktirish";
 
 export default async function BirHududPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("taqsimot");
   if (!projectConfigured()) {
     return (
       <>

@@ -105,7 +105,7 @@ ataylab bor.
 
 ## Taqsimot — `paydocs` → qismlar → `uzasbo_send` (jonli sxema, 2026-09-15)
 
-Bitta to'lov hujjati pulining yo'li. Hozircha FAQAT adminlar (foydalanuvchi qarori, 2026-09-15).
+Bitta to'lov hujjati pulining yo'li. Standart — faqat adminlar (2026-09-15; "Rollar" da o'zgaradi).
 
 - `paydocs` — bankdan kelgan to'lov hujjati (827 262). Faol kirim `state = 1` (426 013, `Поступление`),
   `state = 0` — chiqim/qaytarish. `payment_items.pay_id = paydocs.id` — ⚠️ FK YO'Q, `pay_id` da indeks YO'Q
@@ -140,7 +140,7 @@ Bitta to'lov hujjati pulining yo'li. Hozircha FAQAT adminlar (foydalanuvchi qaro
 
 ## Nazorat paneli — `/dashboard` (2026-09-15)
 
-Bosh sahifa, faqat adminlar (foydalanuvchi tanlovi: pul yo'li + svetofor + dinamika; Telegram — yo'q).
+Bosh sahifa, standart — faqat adminlar (foydalanuvchi tanlovi: pul yo'li + svetofor + dinamika; Telegram — yo'q).
 - **Pul yo'li** (6 bosqich): tushum → biriktirildi (ikkalasi `getBiriktirish` — "Biriktirish borishi" bilan
   AYNAN bir xil; tuman tanlansa ko'rsatilmaydi, `payments` da tuman yo'q) → 12 kanalga taqsimlandi (`jami`)
   → tasdiqlandi (`jami − tasdiqlanmagan`) → kiritildi (`otkazilgan`) → to'ladi (`tolangan`). Oraliqdagi
@@ -153,7 +153,7 @@ Bosh sahifa, faqat adminlar (foydalanuvchi tanlovi: pul yo'li + svetofor + dinam
 
 ## Yo'nalishlar bo'yicha (2026-09-16)
 
-Pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan (`server/services/yonalishlar.ts`). Faqat adminlar.
+Pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan (`server/services/yonalishlar.ts`). Standart — faqat adminlar.
 - ⚠️ YANGI SQL YO'Q: hammasi `getRegionMatrix` ustidan yig'iladi (nazorat paneli bilan BITTA keshlangan hisob).
 - "Chiqishi kerak" = hisoblangan − to'langan (foydalanuvchi qarori) = tasdiqlanmagan + tasdiqlangan-kiritilmagan
   + topshiriqnomada (uchalasi alohida ustun). Ikkinchi jadval — yo'nalish × hudud (chiqishi kerak, mln so'm;
@@ -161,7 +161,7 @@ Pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan (`server/services/y
 
 ## Pul biriktirish — bekor qilish (2026-11-04)
 
-`server/services/pulBiriktirish.ts` + `app/dashboard/pul-biriktirish/`. Faqat adminlar.
+`server/services/pulBiriktirish.ts` + `app/dashboard/pul-biriktirish/`. Standart — faqat adminlar.
 - Shart (foydalanuvchi qarori): summasi > 0 bo'lgan HAR BIR kanalning `sent_*` ustuni `true`
   BO'LMASLIGI; qism `state = 1` bo'lishi. Mos kelsa — `state = 0`, `updated_at = localtimestamp`.
 - ⚠️ Shart UPDATE ning `WHERE` ichida ham takrorlanadi (oraliqda belgi qo'yilsa — 0 qator o'zgaradi),
@@ -192,7 +192,7 @@ Pul qaysi oluvchiga ketishi kerak va qanchasi hali chiqmagan (`server/services/y
 ## Shartnomalar bo'yicha (2026-09-15)
 
 Mavjud tizimdagi "yilda hisoblangan ijara to'lovlari va penyalar" — AYNAN o'sha ta'rif (foydalanuvchi
-SQL'i, `server/services/shartnomalar.ts`). Hozircha faqat adminlar.
+SQL'i, `server/services/shartnomalar.ts`). Standart — faqat adminlar.
 - shartnomalar va qarzdorlik — `vw_contracts` (⚠️ `vw_all_contracts` EMAS): state = 1, doc_status = 3,
   doc_year = yil, type IN (1, 2); debitor = |saldo| (saldo < 0; ijara/penya — |rent|, |penya|), kreditor = saldo > 0.
 - hisoblandi — `billing` (state = 1, ayear = yil): ijara = `credit_sum`, penya = `penya`.
@@ -242,16 +242,24 @@ scripts/maintenance/        audit tozalash (`docker compose --profile maintenanc
 
 ## Kirish
 
-Login + parol (email yo'q), ochiq ro'yxat yo'q. Rollar: `SUPER_ADMIN` (foydalanuvchilar,
-audit), `ADMIN`, `MODERATOR` — hudud moderatori (foydalanuvchi qarori, 2026-09-14): FAQAT
-"To'lovlar ro'yxati" va FAQAT o'z hududi (`User.regionId`, bitta), Excel ham shu hudud bilan;
-`REPUBLIC_MODERATOR` — respublika moderatori (2026-09-15): xuddi shunday faqat ro'yxat va Excel,
-lekin BARCHA hududlar (hudud biriktirilmaydi). `isModerator()` — ikkala tur (sahifa, menyu,
-"Yangilash"), `isRegionModerator()` — faqat hudud cheklovi (`scopeFilters`, qat'iy hudud maydoni).
-⚠️ Himoya `lib/authz.ts` da: `requireUserOrRedirect()` moderatorni STANDART bo'yicha ro'yxatga
-yuboradi (ochiq joylar `{ moderator: true }` bilan: dashboard layout va ro'yxat — layout'da SHART,
-aks holda cheksiz redirect), ro'yxat VA eksportda `scopeFilters()`. Yangi API route qo'shsangiz —
-moderatorni o'ylang: `getCurrentUser()` uni o'tkazadi (menyuda yashirish himoya emas). Rol va hudud har so'rovda bazadan o'qiladi. Sessiya JWT, **1 soat faolsizlik** (sirpanuvchi). Parol tiklansa
+Login + parol (email yo'q), ochiq ro'yxat yo'q. Rollar: `SUPER_ADMIN` (hammasi + foydalanuvchilar,
+audit), `ADMIN`, `MODERATOR` — hudud moderatori (2026-09-14): FAQAT o'z hududi (`User.regionId`,
+bitta), Excel ham shu hudud bilan; `REPUBLIC_MODERATOR` — respublika moderatori (2026-09-15): BARCHA
+hududlar (hudud biriktirilmaydi). `isRegionModerator()` — faqat hudud cheklovi (`scopeFilters`, qat'iy
+hudud maydoni); `isModerator()` — faqat "Yangilash" tugmasi va rol yorlig'i.
+**Sahifalarga kirish — rolga qarab, super admin UI'da o'zgartiradi** (foydalanuvchi qarori, 2026-11-06):
+"Foydalanuvchilar → Rollar" (`/dashboard/users/rollar`). Sahifalar — `lib/pages.ts` (`PAGES`, YAGONA joy:
+kalit, nom, yo'l; menyu ham shundan). Saqlanadi — o'z bazamizdagi `RolePageAccess` (role, page, allowed);
+(rol, sahifa) qatori bo'lmasa — `DEFAULT_ACCESS`: `ADMIN` hammasi, ikkala moderator faqat `royxat`.
+SUPER_ADMIN saqlanmaydi — doim hammasi. Foydalanuvchilar va audit — faqat SUPER_ADMIN, sozlanmaydi.
+"Taqsimot" kaliti barcha `taqsimot/*` (biriktirish, hudud, hujjatlar, muammoli, takroriy) va `/api/taqsimot/*`
+ni qamraydi; `royxat` — `/api/export` ni ham.
+⚠️ Himoya `lib/authz.ts` da: sahifa — `requirePage(key)` (ruxsat yo'q → birinchi ruxsat berilgan sahifa,
+hech biri yo'q → 404), API route — `requirePageApi(key)` (403 "Ruxsat yo'q"), server action —
+`requirePageAction(key)` (xato tashlaydi). Bosh sahifa (`/`) va login'dan keyin — birinchi ruxsat
+berilgan sahifa (`PAGES` tartibida). Ro'yxat VA eksportda `scopeFilters()`. Yangi sahifa yoki API route
+qo'shsangiz — `PAGES` ga kalit va shu uchta funksiyadan biri SHART (menyuda yashirish himoya emas).
+Rol, hudud va ruxsatlar har so'rovda bazadan o'qiladi (`cache()` — bir so'rovda bitta o'qish). Sessiya JWT, **1 soat faolsizlik** (sirpanuvchi). Parol tiklansa
 `sessionVersion` +1 → barcha sessiyalar bekor. Login'ga 15 daqiqada 10 ta xato urinish.
 ⚠️ Cookie nomlari HAR DOIM `payments.*` — dev'da ham: localhost'da obyektlar ilovasi bor,
 cookie portga bog'lanmaydi.

@@ -202,7 +202,8 @@ sudo -u postgres psql -d project -c "GRANT SELECT ON public.paydocs, public.uzas
 ⚠️ `vw_contracts` — ko'rinish. `SELECT reloptions FROM pg_class WHERE relname = 'vw_contracts';` bo'sh
 bo'lsa, ortidagi jadvallarga huquq kerak emas (`security_invoker` bo'lsa — ularga ham `SELECT`).
 
-Migratsiya avtomatik (`migrate` servisi). ⚠️ `docker compose down -v` ishlatmang —
+Migratsiya avtomatik (`migrate` servisi). 0.5.0: yangi jadval `RolePageAccess`
+(`20261106000000_role_page_access`) — qo'lda qadam yo'q; jadval bo'sh bo'lsa ruxsatlar avvalgidek. ⚠️ `docker compose down -v` ishlatmang —
 volume yo'q, lekin odat bo'lib qolmasin (obyektlar ilovasida u butun bazani o'chiradi).
 
 ## Tekshirish

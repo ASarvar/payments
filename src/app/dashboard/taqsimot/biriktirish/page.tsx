@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Banknote, CalendarDays, CheckCircle2, FileDown, Hourglass } from "lucide-react";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { parseFilters, href, type SP } from "@/lib/filters";
 import { withBase } from "@/lib/basePath";
@@ -18,7 +18,7 @@ const PATH = "/dashboard/taqsimot/biriktirish";
 const isZero = (n: number) => Math.abs(n) < 50_000;
 
 export default async function BiriktirishPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("taqsimot");
   if (!projectConfigured()) {
     return (
       <>

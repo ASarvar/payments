@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getRegions } from "@/server/services/payments";
 import { Card, th } from "@/components/ui";
 import { CreateUserForm, UserRow, type RegionOpt, type UserView } from "./UsersClient";
+import { UsersTabs } from "./Tabs";
 
 export default async function UsersPage() {
   const me = await requireSuperAdminPage();
@@ -36,6 +37,7 @@ export default async function UsersPage() {
       <h1 className="mb-5 text-xl font-bold tracking-tight" style={{ color: "var(--navy)" }}>
         Foydalanuvchilar
       </h1>
+      <UsersTabs active="users" />
       {regionsOrNull === null ? (
         <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
           Hududlar ro&apos;yxati olinmadi. Moderator qo&apos;shib yoki hududini o&apos;zgartirib bo&apos;lmaydi.

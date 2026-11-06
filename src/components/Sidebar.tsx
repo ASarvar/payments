@@ -8,6 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { withBase } from "@/lib/basePath";
 import { signOutAction } from "@/app/dashboard/actions";
+import { PAGES, type PageKey } from "@/lib/pages";
 import packageJson from "../../package.json";
 
 const APP_VERSION = packageJson.version;
@@ -18,18 +19,22 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   exact?: boolean;
+  page?: PageKey;
   superOnly?: boolean;
-  adminOnly?: boolean;
 }
 
+const ICONS: Record<PageKey, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  kanal: Layers,
+  yonalishlar: ArrowRightLeft,
+  royxat: List,
+  taqsimot: Split,
+  shartnomalar: FileText,
+  "pul-biriktirish": Link2Off,
+};
+
 const NAV: NavItem[] = [
-  { href: "/dashboard", match: "/dashboard", label: "Nazorat paneli", icon: LayoutDashboard, exact: true, adminOnly: true },
-  { href: "/dashboard/kanal/vat", match: "/dashboard/kanal", label: "Kanallar", icon: Layers, adminOnly: true },
-  { href: "/dashboard/yonalishlar", match: "/dashboard/yonalishlar", label: "Yo'nalishlar", icon: ArrowRightLeft, adminOnly: true },
-  { href: "/dashboard/royxat", match: "/dashboard/royxat", label: "To'lovlar ro'yxati", icon: List },
-  { href: "/dashboard/taqsimot", match: "/dashboard/taqsimot", label: "Taqsimot", icon: Split, adminOnly: true },
-  { href: "/dashboard/shartnomalar", match: "/dashboard/shartnomalar", label: "Shartnomalar", icon: FileText, adminOnly: true },
-  { href: "/dashboard/pul-biriktirish", match: "/dashboard/pul-biriktirish", label: "Pul biriktirish", icon: Link2Off, adminOnly: true },
+  ...PAGES.map((p) => ({ href: p.href, match: p.match, label: p.label, icon: ICONS[p.key], exact: p.exact, page: p.key })),
   { href: "/dashboard/users", match: "/dashboard/users", label: "Foydalanuvchilar", icon: Users, superOnly: true },
   { href: "/dashboard/audit", match: "/dashboard/audit", label: "Audit", icon: ScrollText, superOnly: true },
 ];
@@ -45,17 +50,17 @@ function initials(name: string): string {
 export function Sidebar({
   user,
   isSuperAdmin,
-  isModerator,
+  pages,
 }: {
   user: { name: string; username: string; roleLabel: string };
   isSuperAdmin: boolean;
-  isModerator: boolean;
+  pages: PageKey[];
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
 
-  const items = NAV.filter((n) => (!n.superOnly || isSuperAdmin) && (!n.adminOnly || !isModerator));
+  const items = NAV.filter((n) => (!n.superOnly || isSuperAdmin) && (!n.page || pages.includes(n.page)));
 
   const inner = (
     <>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { href, one, type SP } from "@/lib/filters";
 import { PAGE_SIZE } from "@/server/services/payments";
@@ -11,7 +11,7 @@ import { Pager, TaqsimotNav } from "../parts";
 const PATH = "/dashboard/taqsimot/takroriy";
 
 export default async function DoublePaidPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("taqsimot");
   if (!projectConfigured()) {
     return (
       <>

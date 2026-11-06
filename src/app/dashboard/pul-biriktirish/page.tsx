@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, Ban, Banknote, CheckCircle2, Link2Off, Scissors, Search } from "lucide-react";
-import { requireUserOrRedirect } from "@/lib/authz";
+import { requirePage } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage, projectWriteConfigured } from "@/lib/projectDb";
 import { href, one, type SP } from "@/lib/filters";
 import { dmy, money, nf, sum } from "@/lib/format";
@@ -15,7 +15,7 @@ import { Card, ErrorBox, NotConfigured, PageHeader, th, thR, td, tdR, totalRow, 
 const PATH = "/dashboard/pul-biriktirish";
 
 export default async function PulBiriktirishPage({ searchParams }: { searchParams: Promise<SP> }) {
-  await requireUserOrRedirect();
+  await requirePage("pul-biriktirish");
   if (!projectConfigured()) {
     return (
       <>

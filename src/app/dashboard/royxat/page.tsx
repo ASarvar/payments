@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FileDown } from "lucide-react";
-import { isModerator, isRegionModerator, requireUserOrRedirect, scopeFilters } from "@/lib/authz";
+import { getAllowedPages, isRegionModerator, requirePage, scopeFilters } from "@/lib/authz";
 import { projectConfigured, projectErrorMessage } from "@/lib/projectDb";
 import { CHANNELS, HOLATLAR, channelByKey, holatLabel, isHolat, type Holat } from "@/lib/channels";
 import { parseFilters, filterParams, href, one, type SP } from "@/lib/filters";
@@ -21,7 +21,8 @@ const HOLAT_TONE: Record<string, string> = {
 };
 
 export default async function ListPage({ searchParams }: { searchParams: Promise<SP> }) {
-  const user = await requireUserOrRedirect({ moderator: true });
+  const user = await requirePage("royxat");
+  const canTaqsimot = (await getAllowedPages(user)).has("taqsimot");
   if (!projectConfigured()) {
     return (
       <>
@@ -150,7 +151,7 @@ export default async function ListPage({ searchParams }: { searchParams: Promise
                     </td>
                   </tr>
                 ) : (
-                  data.rows.map((r) => <Row key={r.id} r={r} taqsimot={!isModerator(user)} />)
+                  data.rows.map((r) => <Row key={r.id} r={r} taqsimot={canTaqsimot} />)
                 )}
               </tbody>
             </table>

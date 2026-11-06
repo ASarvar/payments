@@ -27,4 +27,5 @@ export const AUDIT_LABEL: Record<string, string> = {
   CREATE_USER: "Foydalanuvchi qo'shdi",
   RESET_PASSWORD: "Parolni tikladi",
   UPDATE_USER: "Foydalanuvchini o'zgartirdi",
+  UPDATE_ROLE_ACCESS: "Rollar ruxsatini o'zgartirdi",
 };

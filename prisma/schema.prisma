@@ -64,3 +64,14 @@ model AuditLog {
   @@index([createdAt])
   @@index([userId])
 }
+
+/// Rollarga qarab sahifalarga kirish (2026-11-06). Kalitlar — `src/lib/pages.ts`.
+/// Qator yo'q bo'lsa — `DEFAULT_ACCESS`. SUPER_ADMIN bu yerda saqlanmaydi (hammasi ochiq).
+model RolePageAccess {
+  role      Role
+  page      String
+  allowed   Boolean
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@id([role, page])
+}
